@@ -13,4 +13,3 @@ export const PARTICIPANTS = [
   { alias: "Colmena", gameName: "LeMati", tagLine: "Shulk", twitch: "" }, // Colmena,
   { alias: "Sebastian", gameName: "SoySebane", tagLine: "SANV", twitch: "" }, // Colmena,
 ]
-
