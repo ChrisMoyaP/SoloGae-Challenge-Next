@@ -1,61 +1,6 @@
-/*.participants-table {
-  min-width: 720px;
-  width: 90%;
-  margin: 0 auto;
-  margin-top: 10px;
-  border-collapse: collapse;
-  max-width: 800px;
-  background: #1a1a1a;
-}
-
-.participants-table th,
-.participants-table td {
-  border: 1px solid #444;
-  padding: 6px 10px;
-  text-align: center;
-}
-
-.participants-table th {
-  background: #222;
-}
-
-.reload-button {
-  margin-top: 15px;
-  padding: 10px 18px;
-  background: #222;
-  color: #eee;
-  border: 1px solid #555;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 15px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.reload-button:hover {
-  background: #333;
-}
-
-.reload-button::before {
-  content: "↻";
-  font-size: 1rem;
-  display: inline-block;
-  margin-right: .5rem;
-}
-
-.loading {
-  text-align: center;
-  padding: 15px;
-}
-*/
-
 /* ---------- CONTENEDOR DE LA TABLA ---------- */
 .participants-table-container {
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 1rem;
   color: white;
   font-family: Arial, sans-serif;
   display: flex;
@@ -68,7 +13,8 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background: #1f1f1f;
+  background: var(--bg2);
+  border: 1px solid var(--border);
   border-radius: 10px;
 }
 
@@ -80,31 +26,34 @@
 
 /* ---------- HEADER ---------- */
 .participants-table thead tr {
-  background: #272727;
+  background: var(--bg3);
 }
 
 .participants-table th {
   padding: 12px;
   text-align: left;
-  font-weight: bold;
-  font-size: 14px;
-  border-bottom: 1px solid #333;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9aa0a6;
+  border-bottom: 1px solid var(--border);
 }
 
 /* ---------- FILAS ---------- */
 .participants-table td {
-  padding: 10px;
-  border-bottom: 1px solid #333;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
   font-size: 14px;
 }
 
-.participants-table tbody tr:nth-child(even) {
-  background: #2a2a2a;
+.participants-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .participants-table tbody tr:hover {
-  background: #3a3a3a;
-  transition: 0.2s;
+  background: rgba(255, 255, 255, 0.025);
+  transition: background 0.15s;
 }
 
 /* ---------- LINKS ---------- */
@@ -115,6 +64,41 @@
 
 .participants-table a:hover {
   text-decoration: underline;
+}
+
+/* ---------- POSICIONES ---------- */
+.pos-1 { color: var(--gold); font-weight: 700; }
+.pos-2 { color: #c0c0c0;     font-weight: 700; }
+.pos-3 { color: #cd7f32;     font-weight: 700; }
+
+/* ---------- TIER TAGS ---------- */
+.tier-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.tier-iron        { color: #7d7d7d; background: rgba(125,125,125,0.12); border: 1px solid rgba(125,125,125,0.25); }
+.tier-bronze      { color: #cd7f32; background: rgba(205,127,50,0.12);  border: 1px solid rgba(205,127,50,0.25); }
+.tier-silver      { color: #a8a9ad; background: rgba(168,169,173,0.12); border: 1px solid rgba(168,169,173,0.25); }
+.tier-gold        { color: var(--gold); background: rgba(240,180,41,0.12); border: 1px solid rgba(240,180,41,0.25); }
+.tier-platinum    { color: var(--blue); background: rgba(125,211,252,0.12); border: 1px solid rgba(125,211,252,0.25); }
+.tier-emerald     { color: var(--green); background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.25); }
+.tier-diamond     { color: #99ccff; background: rgba(153,204,255,0.12); border: 1px solid rgba(153,204,255,0.25); }
+.tier-master      { color: #c084fc; background: rgba(192,132,252,0.12); border: 1px solid rgba(192,132,252,0.25); }
+.tier-grandmaster { color: var(--red); background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); }
+.tier-challenger  { color: var(--gold); background: rgba(240,180,41,0.18); border: 1px solid rgba(240,180,41,0.4); }
+
+/* ---------- LP FONT (Rajdhani) ---------- */
+.lp-font {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gold);
 }
 
 /* ---------- ÍCONO REFRESH ---------- */
@@ -149,7 +133,7 @@
 }
 
 .refresh-icon.spinning {
-  color: #4da6ff;
+  color: var(--blue);
 }
 
 .refresh-symbol {
@@ -166,13 +150,13 @@
   position: absolute;
   bottom: calc(100% + 6px);
   right: 0;
-  background: #2a2a2a;
+  background: var(--bg3);
   color: #ccc;
   font-size: 0.72rem;
   white-space: nowrap;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--border);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s;
@@ -199,7 +183,7 @@
   .participants-table tr {
     display: block;
     margin-bottom: 12px;
-    background: #1f1f1f;
+    background: var(--bg2);
     border-radius: 8px;
     padding: 10px;
   }
@@ -208,7 +192,7 @@
     display: flex;
     justify-content: space-between;
     padding: 8px 5px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border);
   }
 
   .participants-table td:last-child {

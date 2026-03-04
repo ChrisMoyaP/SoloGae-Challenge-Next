@@ -136,13 +136,20 @@ const ParticipantsTable = ({ rows, loading, onReload, onSelectPlayer }: Props) =
                   item.data.riotId ??
                   `${item.base.gameName}#${item.base.tagLine}`
                 return (
-                  <tr key={`${item.base.gameName}#${item.base.tagLine}`}>
-                    <td data-label="#">{idx + 1}</td>
+                  <tr
+                    key={`${item.base.gameName}#${item.base.tagLine}`}
+                    style={idx === 0 ? { background: "linear-gradient(90deg, rgba(240,180,41,0.04), transparent)" } : undefined}
+                  >
+                    <td data-label="#">
+                      <span className={idx === 0 ? "pos-1" : idx === 1 ? "pos-2" : idx === 2 ? "pos-3" : ""}>
+                        {idx + 1}
+                      </span>
+                    </td>
                     <td data-label="Riot ID">
                       <button
                         onClick={() => onSelectPlayer?.(item.base.gameName, item.base.tagLine)}
                         style={{
-                          color: "#4da6ff",
+                          color: "var(--blue)",
                           background: "none",
                           border: "none",
                           padding: 0,
@@ -157,18 +164,22 @@ const ParticipantsTable = ({ rows, loading, onReload, onSelectPlayer }: Props) =
                     </td>
                     <td data-label="Alias">{item.base.alias}</td>
                     <td data-label="Tier">
-                      {solo ? `${solo.tier} ${solo.rank}` : "-"}
+                      {solo ? (
+                        <span className={`tier-tag tier-${solo.tier.toLowerCase()}`}>
+                          {solo.tier} {solo.rank}
+                        </span>
+                      ) : "-"}
                     </td>
-                    <td data-label="LP">{solo?.lp ?? "-"}</td>
+                    <td data-label="LP" className="lp-font">{solo?.lp ?? "-"}</td>
                     <td data-label="LP Hoy">
                       {item.lpToday === null ? (
-                        <span style={{ color: "#555" }}>—</span>
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
                       ) : item.lpToday > 0 ? (
-                        <span style={{ color: "#4caf50", fontWeight: 600 }}>
+                        <span style={{ color: "var(--green)", fontWeight: 600 }}>
                           +{item.lpToday} LP{item.lpToday >= 50 ? " 🔥" : ""}
                         </span>
                       ) : item.lpToday < 0 ? (
-                        <span style={{ color: "#f44336", fontWeight: 600 }}>
+                        <span style={{ color: "var(--red)", fontWeight: 600 }}>
                           {item.lpToday} LP{item.lpToday <= -50 ? " 💀" : ""}
                         </span>
                       ) : (
@@ -186,7 +197,7 @@ const ParticipantsTable = ({ rows, loading, onReload, onSelectPlayer }: Props) =
                     </td>
                     <td data-label="Twitch">
                       {item.base.twitch === "RETIRADO" ? (
-                        <span style={{ color: "red", fontWeight: 600 }}>
+                        <span style={{ color: "var(--red)", fontWeight: 600 }}>
                           AMARICONAO KL CTM
                         </span>
                       ) : item.base.twitch ? (
@@ -194,12 +205,12 @@ const ParticipantsTable = ({ rows, loading, onReload, onSelectPlayer }: Props) =
                           href={`https://twitch.tv/${item.base.twitch}`}
                           target="_blank"
                           rel="noreferrer"
-                          style={{ color: item.online ? "lightgreen" : "red" }}
+                          style={{ color: item.online ? "var(--green)" : "var(--red)" }}
                         >
                           {item.online ? "ONLINE" : "offline"}
                         </a>
                       ) : (
-                        <span style={{ color: "gray" }}>No tiene Twitch</span>
+                        <span style={{ color: "var(--text-muted)" }}>No tiene Twitch</span>
                       )}
                     </td>
                   </tr>

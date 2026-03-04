@@ -92,7 +92,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                 <div className="stat-value">{soloQ.losses}</div>
                 <div className="stat-label">Derrotas</div>
               </div>
-              <div className="stat-card">
+              <div className="stat-card wr">
                 <div className="stat-value">{wr}%</div>
                 <div className="stat-label">Winrate</div>
               </div>

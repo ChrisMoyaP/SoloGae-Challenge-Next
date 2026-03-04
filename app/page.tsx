@@ -7,6 +7,7 @@ import RankChart from "@/components/RankChart"
 import PredictionPanel from "@/components/PredictionPanel"
 import Countdown from "@/components/Countdown"
 import PlayerProfile from "@/components/PlayerProfile"
+import RightPanel from "@/components/RightPanel"
 import { EVENT_END, EVENT_START } from "@/constants/events"
 import type { ParticipantRow } from "@/types/ParticipantsRow"
 import type { PlayerSnapshots } from "@/types/Snapshot"
@@ -23,6 +24,7 @@ export default function HomePage() {
   const [predictions, setPredictions] = useState<PredictionEntry[]>([])
   const [view, setView] = useState<View>("table")
   const [selectedPlayer, setSelectedPlayer] = useState<{ gameName: string; tagLine: string } | null>(null)
+  const [liveCount, setLiveCount] = useState(0)
 
   const PRICE_PER_PLAYER = 10_000
 
@@ -64,44 +66,74 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="left">
-      {/* Header — siempre visible */}
-      <div className="top-bar">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/GaePicaro.png" className="logo-img" alt="SoloGae Challenge logo" />
-        <div className="prize-box">
-          <div className="prize-title">PREMIO TOTAL:</div>
-          <div className="prize-value">${formatCLP(prize)}</div>
-          <div className="prize-sub">
-            {activePlayers} jugadores activos × ${formatCLP(PRICE_PER_PLAYER)}
+    <>
+      {/* ── Topbar ── */}
+      <header className="topbar">
+        <div className="page-wrapper topbar-inner">
+          {/* Logo */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/GaePicaro.png" className="topbar-logo" alt="SoloGae Challenge" />
+
+          {/* Stats */}
+          <div className="topbar-stats">
+            <div className="stat-box">
+              <div className="stat-value">${formatCLP(prize)}</div>
+              <div className="stat-label">Premio Total</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-value">{activePlayers}</div>
+              <div className="stat-label">Jugadores activos</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-value" style={{ color: "var(--green)" }}>
+                {liveCount}
+              </div>
+              <div className="stat-label">En Vivo</div>
+            </div>
           </div>
+
+          {/* Countdown */}
+          <Countdown start={EVENT_START} end={EVENT_END} />
+        </div>
+      </header>
+
+      {/* ── Body ── */}
+      <div className="page-wrapper">
+        <div className="page-body">
+          {/* Columna principal */}
+          <main className="body-main">
+            {view === "table" ? (
+              <>
+                <ParticipantsTable
+                  rows={rows}
+                  loading={loading}
+                  onReload={load}
+                  onSelectPlayer={handleSelectPlayer}
+                />
+                <div className="bottom-panels">
+                  <RankChart players={snapshots} />
+                  <PredictionPanel entries={predictions} />
+                </div>
+              </>
+            ) : (
+              selectedPlayer && (
+                <PlayerProfile
+                  gameName={selectedPlayer.gameName}
+                  tagLine={selectedPlayer.tagLine}
+                  onBack={handleBack}
+                />
+              )
+            )}
+          </main>
+
+          {/* Columna lateral */}
+          <aside className="body-side">
+            <div className="side-stream">
+              <RightPanel onStreamersChange={setLiveCount} />
+            </div>
+          </aside>
         </div>
       </div>
-
-      {/* Contenido dinámico */}
-      {view === "table" ? (
-        <>
-          <ParticipantsTable
-            rows={rows}
-            loading={loading}
-            onReload={load}
-            onSelectPlayer={handleSelectPlayer}
-          />
-          <RankChart players={snapshots} />
-          <PredictionPanel entries={predictions} />
-        </>
-      ) : (
-        selectedPlayer && (
-          <PlayerProfile
-            gameName={selectedPlayer.gameName}
-            tagLine={selectedPlayer.tagLine}
-            onBack={handleBack}
-          />
-        )
-      )}
-
-      {/* Footer — siempre visible */}
-      <Countdown start={EVENT_START} end={EVENT_END} />
-    </div>
+    </>
   )
 }
