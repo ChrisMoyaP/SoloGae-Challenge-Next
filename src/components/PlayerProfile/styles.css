@@ -238,6 +238,309 @@
   flex-shrink: 0;
 }
 
+/* ===== Performance stats grid ===== */
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.perf-card {
+  background: #141428;
+  border: 1px solid #1a1a30;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+
+.perf-card .stat-value { color: var(--gold); }
+.perf-card .stat-label { font-size: 0.68rem; }
+
+/* ===== Tournament comparison ===== */
+.tournament-section {
+  background: #141428;
+  border: 1px solid #1a1a30;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 36px 56px 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.compare-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.compare-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.compare-bar-wrap {
+  height: 6px;
+  background: #1a1a30;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.compare-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.compare-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.compare-avg-text {
+  font-size: 0.75rem;
+  color: #555;
+  white-space: nowrap;
+}
+
+.compare-indicator {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.compare-indicator.above { color: var(--green); background: rgba(74,222,128,0.12); }
+.compare-indicator.below { color: var(--red);   background: rgba(239,68,68,0.12); }
+.compare-indicator.equal { color: #9aa0a6;      background: rgba(255,255,255,0.05); }
+
+.tournament-position {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* ===== Match expanded detail ===== */
+.match-card {
+  flex-direction: column;
+  align-items: stretch;
+  cursor: pointer;
+}
+
+.match-card-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.match-expand {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  margin-top: 0.65rem;
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.match-detail-kda {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.match-detail-kda.great { color: var(--green); }
+.match-detail-kda.poor  { color: var(--red); }
+.match-detail-kda.normal { color: #fff; }
+
+.match-detail-ratio {
+  font-size: 0.8rem;
+  color: #9aa0a6;
+  margin-top: 0.15rem;
+}
+
+.match-detail-stats {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.match-detail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.match-detail-stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #eee;
+}
+
+.match-detail-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.items-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid #2a2a40;
+  object-fit: cover;
+}
+
+.rune-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.match-expand-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.match-date {
+  font-size: 0.78rem;
+  color: #666;
+  text-transform: capitalize;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.team-block { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.team-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+}
+.team-title.blue { color: #60a5fa; }
+.team-title.red  { color: #f87171; }
+
+.team-player {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #ccc;
+}
+.team-player.is-me { color: var(--gold); font-weight: 600; }
+
+.team-champ-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #2a2a40;
+  flex-shrink: 0;
+}
+
+/* ===== Info tooltip ===== */
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+  vertical-align: middle;
+}
+
+.info-tip-icon {
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 400;
+  color: #444;
+  margin-left: 0.3rem;
+  line-height: 1;
+  transition: color 0.15s;
+  user-select: none;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.info-tip:hover .info-tip-icon {
+  color: #fff;
+}
+
+.info-tip::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #141428;
+  border: 1px solid #1a1a30;
+  color: #ddd;
+  font-size: 0.72rem;
+  font-weight: 400;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  white-space: normal;
+  width: 220px;
+  max-width: 220px;
+  text-align: left;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.info-tip::after {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1a1a30;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 200;
+}
+
+.info-tip:hover::before,
+.info-tip:hover::after {
+  opacity: 1;
+}
+
 /* ===== Loading ===== */
 .profile-loading {
   text-align: center;
@@ -266,4 +569,9 @@
 
   .match-result { width: 56px; }
   .match-kda    { width: 64px; }
+
+  .perf-grid    { grid-template-columns: repeat(2, 1fr); }
+  .teams-grid   { grid-template-columns: 1fr; }
+
+  .match-detail-stats { gap: 1rem; }
 }

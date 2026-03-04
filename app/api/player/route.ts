@@ -26,17 +26,31 @@ interface MatchParticipant {
   deaths: number
   assists: number
   win: boolean
+  teamPosition: string
+  totalMinionsKilled: number
+  item0: number; item1: number; item2: number
+  item3: number; item4: number; item5: number; item6: number
+  challenges?: { killParticipation?: number; damagePerMinute?: number }
+  perks?: { styles: { selections: { perk: number }[] }[] }
+  teamId: number
+  riotIdGameName?: string
+  summonerName?: string
 }
 
 interface MatchDetail {
   metadata: { matchId: string }
-  info: { gameDuration: number; participants: MatchParticipant[] }
+  info: {
+    gameDuration: number
+    gameStartTimestamp: number
+    participants: MatchParticipant[]
+  }
 }
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const gameName = searchParams.get("gameName") ?? ""
   const tagLine  = searchParams.get("tagLine")  ?? ""
+  const debug    = searchParams.get("debug") === "true"
 
   if (!gameName || !tagLine) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 })
@@ -87,10 +101,37 @@ export async function GET(req: NextRequest) {
     })
   )
 
+  // DEBUG: retorna el participante crudo de la primera partida disponible
+  if (debug) {
+    for (const detail of matchDetails) {
+      if (!detail) continue
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = (detail as any).info.participants.find((pt: any) => pt.puuid === account.puuid)
+      if (!p) continue
+      return NextResponse.json({
+        _debug: true,
+        matchId: (detail as any).metadata.matchId,
+        participant_root_keys: Object.keys(p),
+        challenges_keys: p.challenges ? Object.keys(p.challenges) : null,
+        perks_keys: p.perks ? Object.keys(p.perks) : null,
+        participant: p,
+      })
+    }
+    return NextResponse.json({ _debug: true, error: "No matches found" })
+  }
+
   // 4. Procesar partidas
   const matches: {
     matchId: string; win: boolean; championName: string
     kills: number; deaths: number; assists: number; duration: number
+    teamPosition: string; totalMinionsKilled: number
+    item0: number; item1: number; item2: number
+    item3: number; item4: number; item5: number; item6: number
+    killParticipation: number | null
+    damagePerMinute: number | null
+    keystoneId: number | null
+    gameStartTimestamp: number
+    participants: { puuid: string; championName: string; teamId: number; name: string }[]
   }[] = []
 
   for (const detail of matchDetails) {
@@ -98,13 +139,32 @@ export async function GET(req: NextRequest) {
     const p = detail.info.participants.find((pt) => pt.puuid === account.puuid)
     if (!p) continue
     matches.push({
-      matchId:      detail.metadata.matchId,
-      win:          p.win,
-      championName: p.championName,
-      kills:        p.kills,
-      deaths:       p.deaths,
-      assists:      p.assists,
-      duration:     detail.info.gameDuration,
+      matchId:             detail.metadata.matchId,
+      win:                 p.win,
+      championName:        p.championName,
+      kills:               p.kills,
+      deaths:              p.deaths,
+      assists:             p.assists,
+      duration:            detail.info.gameDuration,
+      teamPosition:        p.teamPosition ?? "",
+      totalMinionsKilled:  p.totalMinionsKilled ?? 0,
+      item0:               p.item0 ?? 0,
+      item1:               p.item1 ?? 0,
+      item2:               p.item2 ?? 0,
+      item3:               p.item3 ?? 0,
+      item4:               p.item4 ?? 0,
+      item5:               p.item5 ?? 0,
+      item6:               p.item6 ?? 0,
+      killParticipation:   p.challenges?.killParticipation ?? null,
+      damagePerMinute:     p.challenges?.damagePerMinute    ?? null,
+      keystoneId:          p.perks?.styles?.[0]?.selections?.[0]?.perk ?? null,
+      gameStartTimestamp:  detail.info.gameStartTimestamp,
+      participants:        detail.info.participants.map((pt) => ({
+        puuid:        pt.puuid,
+        championName: pt.championName,
+        teamId:       pt.teamId,
+        name:         pt.riotIdGameName ?? pt.summonerName ?? "",
+      })),
     })
   }
 
