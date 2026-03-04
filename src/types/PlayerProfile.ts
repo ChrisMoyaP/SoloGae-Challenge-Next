@@ -10,7 +10,7 @@ export interface PlayerProfileData {
   } | null
   alias: string | null
   twitchUsername: string | null
-  matches: {
+  matches?: {
     matchId: string
     win: boolean
     championName: string
@@ -18,8 +18,22 @@ export interface PlayerProfileData {
     deaths: number
     assists: number
     duration: number
+    teamPosition: string
+    totalMinionsKilled: number
+    item0: number; item1: number; item2: number
+    item3: number; item4: number; item5: number; item6: number
+    killParticipation: number | null
+    damagePerMinute: number | null
+    keystoneId: number | null
+    gameStartTimestamp: number
+    participants: {
+      puuid: string
+      championName: string
+      teamId: number
+      name: string
+    }[]
   }[]
-  topChamps: {
+  topChamps?: {
     name: string
     games: number
     wins: number
