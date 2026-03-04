@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import RightPanel from "@/components/RightPanel"
 
 export const metadata: Metadata = {
   title: "SoloGae Challenge",
@@ -20,8 +21,7 @@ export default function RootLayout({
         <div className="site-layout">
           <div className="site-left">{children}</div>
           <div className="site-right">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/GaeBienvenida.jpg" className="center-img" alt="Bienvenida" />
+            <RightPanel />
           </div>
         </div>
       </body>
