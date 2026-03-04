@@ -57,13 +57,13 @@ export async function GET() {
       SELECT id, game_name, tag_line, alias
       FROM participants
       WHERE active = true
-    ` as Promise<ParticipantDB[]>,
+    ` as unknown as Promise<ParticipantDB[]>,
     sql`
       SELECT participant_id, AVG(rank_value)::float AS avg_rank_value
       FROM rank_snapshots
       WHERE snapshot_date >= CURRENT_DATE - INTERVAL '7 days'
       GROUP BY participant_id
-    ` as Promise<SnapshotAvg[]>,
+    ` as unknown as Promise<SnapshotAvg[]>,
   ])
 
   const snapshotMap: Record<string, number> = {}
