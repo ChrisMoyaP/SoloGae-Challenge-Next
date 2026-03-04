@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import "./styles.css"
 
 interface LiveStreamer {
@@ -12,17 +12,21 @@ interface LiveStreamer {
 export default function RightPanel() {
   const [streamers, setStreamers] = useState<LiveStreamer[]>([])
   const [watching,  setWatching]  = useState<string | null>(null)
+  const fetching = useRef(false)
 
   function fetchLive() {
+    if (fetching.current) return
+    fetching.current = true
     fetch("/api/twitch/live")
       .then((r) => r.json())
       .then((d) => setStreamers(d.streamers ?? []))
       .catch(() => {})
+      .finally(() => { fetching.current = false })
   }
 
   useEffect(() => {
     fetchLive()
-    const interval = setInterval(fetchLive, 2 * 60 * 1000)
+    const interval = setInterval(fetchLive, 5 * 60 * 1000)
     return () => clearInterval(interval)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -43,6 +47,7 @@ export default function RightPanel() {
         </button>
         <iframe
           src={`https://player.twitch.tv/?channel=${watching}&parent=${hostname}`}
+          allow="autoplay; fullscreen"
           allowFullScreen
           className="stream-iframe"
           title={`Stream de ${watching}`}
