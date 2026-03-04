@@ -21,9 +21,8 @@ export default function PredictionPanel({ entries }: Props) {
     <div
       style={{
         width: "100%",
-        maxWidth: 900,
-        background: "#121212",
-        border: "1px solid #2c2c2c",
+        background: "var(--bg2)",
+        border: "1px solid var(--border)",
         borderRadius: 12,
         padding: "1.25rem 1rem 1rem",
       }}
@@ -33,7 +32,7 @@ export default function PredictionPanel({ entries }: Props) {
           margin: "0 0 1rem 0.5rem",
           fontSize: "0.75rem",
           fontWeight: 600,
-          color: "#9aa0a6",
+          color: "var(--text-muted)",
           textTransform: "uppercase",
           letterSpacing: "0.1em",
         }}
@@ -58,10 +57,10 @@ export default function PredictionPanel({ entries }: Props) {
                 alignItems: "center",
                 gap: "0.75rem",
                 padding: "0.6rem 0.75rem",
-                background: isFirst ? "rgba(255, 215, 0, 0.05)" : "#1a1a1a",
+                background: isFirst ? "rgba(240, 180, 41, 0.05)" : "var(--bg3)",
                 border: isFirst
-                  ? "1px solid rgba(255, 215, 0, 0.2)"
-                  : "1px solid #252525",
+                  ? "1px solid rgba(240, 180, 41, 0.2)"
+                  : "1px solid var(--border)",
                 borderRadius: 8,
               }}
             >
@@ -94,7 +93,7 @@ export default function PredictionPanel({ entries }: Props) {
               {/* Barra de progreso */}
               <div
                 style={{
-                  background: "#252525",
+                  background: "var(--border)",
                   borderRadius: 4,
                   height: 8,
                   overflow: "hidden",

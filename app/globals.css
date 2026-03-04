@@ -1,3 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap');
+
+/* ===== VARIABLES ===== */
+:root {
+  --gold:   #f0b429;
+  --red:    #ef4444;
+  --green:  #4ade80;
+  --blue:   #7dd3fc;
+  --bg:     #0a0a12;
+  --bg2:    #0f0f1e;
+  --bg3:    #141428;
+  --border: #1a1a30;
+  --text-muted: #444;
+}
+
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
   width: 4px;
@@ -20,7 +35,7 @@
 
 body {
   font-family: Arial, sans-serif;
-  background: #101010;
+  background: var(--bg);
   color: #eee;
   margin: 0;
   padding: 0;
@@ -35,125 +50,186 @@ button {
   cursor: pointer;
 }
 
-/* ===== SITE LAYOUT (dos columnas persistentes) ===== */
-.site-layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* Columna izquierda: contenido con scroll independiente */
-.site-left {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
-/* Columna derecha: gato fijo */
-.site-right {
-  flex: 1;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-/* Contenido de la página principal */
-.left {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 2rem;
-  border: none !important;
-  outline: none !important;
-}
-
-/* Logo torneo */
-.logo-img {
-  width: 220px;
-  max-width: 100%;
-  align-self: center;
-}
-
-/* Imagen lateral */
+/* Imagen que ocupa su contenedor */
 .center-img {
   width: 100%;
   height: auto;
   object-fit: contain;
 }
 
-/* ===== TOP BAR (logo + premio) ===== */
-.top-bar {
-  width: 50%;
-  max-width: 900px;
+/* ===== LAYOUT ===== */
+
+/* Contenedor centrado con max-width */
+.page-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ── Topbar ── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  margin: 0 auto;
+  padding: 0.65rem 0;
+  gap: 1rem;
 }
 
-.prize-box {
-  text-align: right;
-  padding: 0.75rem 1.25rem;
-  border: 1px solid #2c2c2c;
+.topbar-logo {
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.topbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.stat-box {
+  text-align: center;
+  padding: 0.5rem 1.1rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: rgba(18, 18, 18, 0.7);
 }
 
-.prize-title {
+.stat-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #cfd8dc;
-  letter-spacing: 0.5px;
+  color: var(--gold);
+  line-height: 1;
 }
 
-.prize-value {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: white;
+.stat-label {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 0.2rem;
 }
 
-.prize-sub {
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
-  color: #9aa0a6;
+/* ── Countdown dentro del topbar ── */
+.topbar .countdown-card {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  width: auto;
+  margin-top: 0;
+  text-align: right;
+}
+
+.topbar .countdown-card h2 {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+}
+
+.topbar .countdown-grid {
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.topbar .count-box {
+  flex: none;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.55rem;
+  min-width: 44px;
+}
+
+.topbar .count-box .n {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.topbar .count-box .l {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 1;
+}
+
+/* ── Cuerpo de la página ── */
+.page-body {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  align-items: stretch;
+}
+
+.body-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+/* Sidebar fija mientras se hace scroll */
+.body-side {
+  position: sticky;
+  top: 80px; /* aprox. altura del topbar + gap */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.side-stream {
+  flex: 1;
+  min-height: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Gráfico y predicción en dos columnas */
+.bottom-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.bottom-panels > * {
+  min-width: 0;
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
-  .site-layout {
-    height: auto;
-    overflow: visible;
+@media (max-width: 1024px) {
+  .page-body {
+    grid-template-columns: 1fr;
   }
 
-  .site-left {
-    overflow-y: visible;
+  .body-side {
+    display: none;
+  }
+}
+
+@media (max-width: 750px) {
+  .bottom-panels {
+    grid-template-columns: 1fr;
   }
 
-  .site-right {
+  .topbar-stats {
     display: none;
   }
 
-  .left {
-    width: 100%;
-    padding: 1rem;
-  }
-
-  .top-bar {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .prize-box {
-    text-align: center;
-    width: 100%;
-    max-width: 420px;
+  .page-wrapper {
+    padding: 0 1rem;
   }
 }
 

@@ -59,8 +59,8 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return (
     <div
       style={{
-        background: "#1a1a1a",
-        border: "1px solid #333",
+        background: "var(--bg3)",
+        border: "1px solid var(--border)",
         borderRadius: 8,
         padding: "0.65rem 0.9rem",
         fontSize: 13,
@@ -118,9 +118,8 @@ export default function RankChart({ players }: Props) {
     <div
       style={{
         width: "100%",
-        maxWidth: 900,
-        background: "#121212",
-        border: "1px solid #2c2c2c",
+        background: "var(--bg2)",
+        border: "1px solid var(--border)",
         borderRadius: 12,
         padding: "1.25rem 1rem 1rem",
       }}
@@ -130,7 +129,7 @@ export default function RankChart({ players }: Props) {
           margin: "0 0 1rem 0.5rem",
           fontSize: "0.75rem",
           fontWeight: 600,
-          color: "#9aa0a6",
+          color: "var(--text-muted)",
           textTransform: "uppercase",
           letterSpacing: "0.1em",
         }}
@@ -143,7 +142,7 @@ export default function RankChart({ players }: Props) {
           data={chartData}
           margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#252525" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
