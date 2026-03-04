@@ -1,0 +1,224 @@
+/*.participants-table {
+  min-width: 720px;
+  width: 90%;
+  margin: 0 auto;
+  margin-top: 10px;
+  border-collapse: collapse;
+  max-width: 800px;
+  background: #1a1a1a;
+}
+
+.participants-table th,
+.participants-table td {
+  border: 1px solid #444;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.participants-table th {
+  background: #222;
+}
+
+.reload-button {
+  margin-top: 15px;
+  padding: 10px 18px;
+  background: #222;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.reload-button:hover {
+  background: #333;
+}
+
+.reload-button::before {
+  content: "↻";
+  font-size: 1rem;
+  display: inline-block;
+  margin-right: .5rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 15px;
+}
+*/
+
+/* ---------- CONTENEDOR DE LA TABLA ---------- */
+.participants-table-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+/* ---------- TABLA ---------- */
+.participants-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #1f1f1f;
+  border-radius: 10px;
+}
+
+/* Esquinas redondeadas en las celdas de borde */
+.participants-table thead tr:first-child th:first-child { border-top-left-radius: 10px; }
+.participants-table thead tr:first-child th:last-child  { border-top-right-radius: 10px; }
+.participants-table tbody tr:last-child  td:first-child { border-bottom-left-radius: 10px; }
+.participants-table tbody tr:last-child  td:last-child  { border-bottom-right-radius: 10px; }
+
+/* ---------- HEADER ---------- */
+.participants-table thead tr {
+  background: #272727;
+}
+
+.participants-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+  font-size: 14px;
+  border-bottom: 1px solid #333;
+}
+
+/* ---------- FILAS ---------- */
+.participants-table td {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  font-size: 14px;
+}
+
+.participants-table tbody tr:nth-child(even) {
+  background: #2a2a2a;
+}
+
+.participants-table tbody tr:hover {
+  background: #3a3a3a;
+  transition: 0.2s;
+}
+
+/* ---------- LINKS ---------- */
+.participants-table a {
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.participants-table a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- ÍCONO REFRESH ---------- */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.refresh-icon {
+  position: relative;
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.15rem 0.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.refresh-icon:hover {
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.refresh-icon:disabled {
+  cursor: not-allowed;
+}
+
+.refresh-icon.spinning {
+  color: #4da6ff;
+}
+
+.refresh-symbol {
+  display: inline-block;
+}
+
+.refresh-icon.spinning .refresh-symbol {
+  animation: spin 0.7s linear infinite;
+}
+
+/* Tooltip */
+.refresh-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  background: #2a2a2a;
+  color: #ccc;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #3a3a3a;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+
+.refresh-icon:hover::after {
+  opacity: 1;
+}
+
+/* ---------- TEXTO DE CARGA ---------- */
+.loading {
+  margin-top: 1rem;
+  text-align: center;
+  color: #cccccc;
+}
+
+/* ---------- RESPONSIVE: TABLA → TARJETAS ---------- */
+@media (max-width: 750px) {
+  .participants-table thead {
+    display: none;
+  }
+
+  .participants-table tr {
+    display: block;
+    margin-bottom: 12px;
+    background: #1f1f1f;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .participants-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 5px;
+    border-bottom: 1px solid #333;
+  }
+
+  .participants-table td:last-child {
+    border-bottom: none;
+  }
+
+  .participants-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #ffcc00;
+    margin-right: 10px;
+  }
+}

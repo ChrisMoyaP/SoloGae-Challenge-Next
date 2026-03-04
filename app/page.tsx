@@ -1,0 +1,107 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { ParticipantsController } from "@/controllers/ParticipantsController"
+import ParticipantsTable from "@/components/ParticipantsTable"
+import RankChart from "@/components/RankChart"
+import PredictionPanel from "@/components/PredictionPanel"
+import Countdown from "@/components/Countdown"
+import PlayerProfile from "@/components/PlayerProfile"
+import { EVENT_END, EVENT_START } from "@/constants/events"
+import type { ParticipantRow } from "@/types/ParticipantsRow"
+import type { PlayerSnapshots } from "@/types/Snapshot"
+import type { PredictionEntry } from "@/types/Prediction"
+
+const controller = new ParticipantsController()
+
+type View = "table" | "player"
+
+export default function HomePage() {
+  const [rows, setRows] = useState<ParticipantRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [snapshots,   setSnapshots]   = useState<PlayerSnapshots[]>([])
+  const [predictions, setPredictions] = useState<PredictionEntry[]>([])
+  const [view, setView] = useState<View>("table")
+  const [selectedPlayer, setSelectedPlayer] = useState<{ gameName: string; tagLine: string } | null>(null)
+
+  const PRICE_PER_PLAYER = 10_000
+
+  const activePlayers = rows.filter(
+    (p) => p.base.twitch !== "RETIRADO"
+  ).length
+
+  const prize = activePlayers * PRICE_PER_PLAYER
+
+  const formatCLP = (n: number) => n.toLocaleString("es-CL")
+
+  async function load() {
+    setLoading(true)
+    const data = await controller.getAllOrdered()
+    setRows(data)
+    setLoading(false)
+  }
+
+  function handleSelectPlayer(gameName: string, tagLine: string) {
+    setSelectedPlayer({ gameName, tagLine })
+    setView("player")
+  }
+
+  function handleBack() {
+    setView("table")
+  }
+
+  useEffect(() => {
+    void load()
+    fetch("/api/snapshots")
+      .then((r) => r.json())
+      .then((data: PlayerSnapshots[]) => setSnapshots(data))
+      .catch(() => {})
+    fetch("/api/prediction")
+      .then((r) => r.json())
+      .then((data: PredictionEntry[]) => setPredictions(data))
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div className="left">
+      {/* Header — siempre visible */}
+      <div className="top-bar">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/GaePicaro.png" className="logo-img" alt="SoloGae Challenge logo" />
+        <div className="prize-box">
+          <div className="prize-title">PREMIO TOTAL:</div>
+          <div className="prize-value">${formatCLP(prize)}</div>
+          <div className="prize-sub">
+            {activePlayers} jugadores activos × ${formatCLP(PRICE_PER_PLAYER)}
+          </div>
+        </div>
+      </div>
+
+      {/* Contenido dinámico */}
+      {view === "table" ? (
+        <>
+          <ParticipantsTable
+            rows={rows}
+            loading={loading}
+            onReload={load}
+            onSelectPlayer={handleSelectPlayer}
+          />
+          <RankChart players={snapshots} />
+          <PredictionPanel entries={predictions} />
+        </>
+      ) : (
+        selectedPlayer && (
+          <PlayerProfile
+            gameName={selectedPlayer.gameName}
+            tagLine={selectedPlayer.tagLine}
+            onBack={handleBack}
+          />
+        )
+      )}
+
+      {/* Footer — siempre visible */}
+      <Countdown start={EVENT_START} end={EVENT_END} />
+    </div>
+  )
+}

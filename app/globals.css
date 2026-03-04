@@ -1,0 +1,147 @@
+/* ===== RESET Y BASE ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #101010;
+  color: #eee;
+  margin: 0;
+  padding: 0;
+}
+
+h2 {
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+/* ===== SITE LAYOUT (dos columnas persistentes) ===== */
+.site-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Columna izquierda: contenido con scroll independiente */
+.site-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Columna derecha: gato fijo */
+.site-right {
+  flex: 1;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Contenido de la página principal */
+.left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Logo torneo */
+.logo-img {
+  width: 220px;
+  max-width: 100%;
+  align-self: center;
+}
+
+/* Imagen lateral */
+.center-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* ===== TOP BAR (logo + premio) ===== */
+.top-bar {
+  width: 50%;
+  max-width: 900px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: 0 auto;
+}
+
+.prize-box {
+  text-align: right;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #2c2c2c;
+  border-radius: 10px;
+  background: rgba(18, 18, 18, 0.7);
+}
+
+.prize-title {
+  font-weight: 700;
+  color: #cfd8dc;
+  letter-spacing: 0.5px;
+}
+
+.prize-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: white;
+}
+
+.prize-sub {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #9aa0a6;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .site-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  .site-left {
+    overflow-y: visible;
+  }
+
+  .site-right {
+    display: none;
+  }
+
+  .left {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .prize-box {
+    text-align: center;
+    width: 100%;
+    max-width: 420px;
+  }
+}
+
+.participants-table td::before {
+  color: #cfd8dc;
+}

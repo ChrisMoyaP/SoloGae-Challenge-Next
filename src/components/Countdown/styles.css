@@ -1,0 +1,40 @@
+.countdown-card {
+  background: #111827;
+  padding: 18px;
+  border-radius: 12px;
+  text-align: center;
+  width: 360px;
+  color: white;
+  margin-top: 15px;
+}
+
+.countdown-card h2 {
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.countdown-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.count-box {
+  flex: 1;
+  background: #1f2937;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #374151;
+}
+
+.count-box .n {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.count-box .l {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
