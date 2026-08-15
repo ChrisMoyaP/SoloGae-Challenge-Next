@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import type { PlayerSnapshots } from "@/types/Snapshot"
+import { useState } from "react"
 
 interface Props {
   players: PlayerSnapshots[]
@@ -28,6 +29,7 @@ function formatDate(iso: string): string {
 }
 
 function formatYTick(v: number): string {
+  if (v >= 2900) return "Master+"
   if (v >= 2500) return "Diamond"
   if (v >= 2100) return "Emerald"
   if (v >= 1700) return "Platinum"
@@ -88,6 +90,17 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export default function RankChart({ players }: Props) {
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+
+  function toggleSeries(alias: string) {
+    setHidden((prev) => {
+      const next = new Set(prev)
+      if (next.has(alias)) next.delete(alias)
+      else next.add(alias)
+      return next
+    })
+  }
+
   if (!players.length) {
     return (
       <p style={{ color: "#555", textAlign: "center", fontSize: 14 }}>
@@ -159,7 +172,16 @@ export default function RankChart({ players }: Props) {
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend
-            wrapperStyle={{ color: "#ccc", fontSize: 12, paddingTop: "0.75rem" }}
+            wrapperStyle={{ color: "#ccc", fontSize: 12, paddingTop: "0.75rem", cursor: "pointer" }}
+            onClick={(e) => { if (typeof e.value === "string") toggleSeries(e.value) }}
+            formatter={(value) => (
+              <span style={{
+                color: hidden.has(value as string) ? "#555" : "#ccc",
+                textDecoration: hidden.has(value as string) ? "line-through" : "none",
+              }}>
+                {value}
+              </span>
+            )}
           />
           {players.map((player, i) => (
             <Line
@@ -171,6 +193,7 @@ export default function RankChart({ players }: Props) {
               dot={{ r: 3, fill: COLORS[i % COLORS.length] }}
               activeDot={{ r: 5 }}
               connectNulls={false}
+              hide={hidden.has(player.alias)}
             />
           ))}
         </LineChart>

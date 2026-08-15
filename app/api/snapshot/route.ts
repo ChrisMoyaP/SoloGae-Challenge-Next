@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import sql from "@/lib/db"
+import { calcRankValue } from "@/utils/calcRankValue"
 
 // ===== Riot API =====
 const AMERICAS = "https://americas.api.riotgames.com"
@@ -7,23 +8,6 @@ const LA2      = "https://la2.api.riotgames.com"
 
 function riotHeaders() {
   return { "X-Riot-Token": process.env.RIOT_API_KEY ?? "" }
-}
-
-// ===== Cálculo de rank_value =====
-const TIER_BASE: Record<string, number> = {
-  IRON:     0,
-  BRONZE:   400,
-  SILVER:   800,
-  GOLD:     1200,
-  PLATINUM: 1600,
-  EMERALD:  2000,
-  DIAMOND:  2400,
-}
-
-const DIVISION_VALUE: Record<string, number> = { IV: 1, III: 2, II: 3, I: 4 }
-
-function calcRankValue(tier: string, rank: string, lp: number): number {
-  return (TIER_BASE[tier] ?? 0) + (DIVISION_VALUE[rank] ?? 0) * 100 + lp
 }
 
 // ===== Helpers Riot =====

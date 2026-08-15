@@ -1,16 +1,249 @@
+/* ---------- TOOLBAR (buscador + filtros) ---------- */
+.participants-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.toolbar-search {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: white;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  min-width: 180px;
+}
+
+.toolbar-search:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.toolbar-group {
+  display: flex;
+  gap: 4px;
+}
+
+.toolbar-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: #9aa0a6;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.toolbar-btn:hover {
+  color: white;
+  border-color: #555;
+}
+
+.toolbar-btn.active {
+  color: var(--bg1, #0d0d10);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+/* ---------- RACHA (dots) ---------- */
+.streak-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.streak-dot.win  { background: var(--green); }
+.streak-dot.loss { background: var(--red); }
+
+/* ---------- BADGE "EN PARTIDA" ---------- */
+.in-game-badge {
+  margin-left: 6px;
+  font-size: 0.85rem;
+}
+
+/* ---------- LINK OP.GG ---------- */
+.opgg-link {
+  display: inline-block;
+  color: #9aa0a6 !important;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+.opgg-link:hover {
+  color: white !important;
+  border-color: #555;
+}
+
+/* ---------- PANEL DE DETALLE (fila expandida) ---------- */
+.row-detail {
+  background: var(--bg1, #0d0d10);
+  padding: 14px 18px 18px;
+  cursor: default;
+}
+
+.row-detail-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.row-detail-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #9aa0a6;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+
+.row-detail-tab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.row-detail-loading,
+.row-detail-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+}
+
+.row-detail-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.row-match {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  background: var(--bg2);
+  font-size: 0.8rem;
+}
+
+.row-match.win  { border-left-color: var(--green); }
+.row-match.loss { border-left-color: var(--red); }
+
+.row-match-result {
+  width: 56px;
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.row-match.win  .row-match-result { color: var(--green); }
+.row-match.loss .row-match-result { color: var(--red); }
+
+.row-match-champ {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.row-match-rune {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.row-match-champ-name {
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.row-match-role {
+  color: var(--text-muted);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.row-match-kda {
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.row-match-ratio {
+  color: var(--text-muted);
+}
+
+.row-match-cs {
+  color: var(--text-muted);
+  min-width: 55px;
+  flex-shrink: 0;
+}
+
+.row-match-duration {
+  color: var(--text-muted);
+  min-width: 45px;
+  flex-shrink: 0;
+}
+
+.row-match-date {
+  color: var(--text-muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.row-detail-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.row-stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.row-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.row-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 /* ---------- CONTENEDOR DE LA TABLA ---------- */
 .participants-table-container {
   width: 100%;
   color: white;
   font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
   position: relative;
 }
 
 /* ---------- TABLA ---------- */
 .participants-table {
   width: 100%;
+  min-width: 1150px;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--bg2);
@@ -54,6 +287,16 @@
 .participants-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.025);
   transition: background 0.15s;
+}
+
+.participant-row {
+  cursor: pointer;
+}
+
+.expand-caret {
+  margin-left: 6px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
 }
 
 /* ---------- LINKS ---------- */
@@ -176,6 +419,10 @@
 
 /* ---------- RESPONSIVE: TABLA → TARJETAS ---------- */
 @media (max-width: 750px) {
+  .participants-table {
+    min-width: 0;
+  }
+
   .participants-table thead {
     display: none;
   }
