@@ -1,0 +1,394 @@
+.stats-loading {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+.stats-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.stats-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.stats-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.stats-section-hint {
+  font-size: 0.68rem;
+  color: #666;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+.stats-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+/* ---------- TOPS ---------- */
+.stat-top-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.stat-top-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+
+.stat-top-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #eee;
+}
+
+.stat-top-subtitle {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.stat-top-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.stat-top-list li {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.stat-top-list li.first .stat-top-alias,
+.stat-top-list li.first .stat-top-value {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.stat-top-rank {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.stat-top-alias {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-top-value {
+  font-weight: 600;
+}
+
+.stat-top-games {
+  grid-column: 2 / span 2;
+  font-size: 0.66rem;
+  color: #666;
+}
+
+/* ---------- MEJORES DÍAS ---------- */
+.day-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.day-tab {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: #9aa0a6;
+  border-radius: 6px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.day-tab.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(240, 180, 41, 0.08);
+}
+
+.day-delta-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.day-delta-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.day-delta-alias {
+  font-weight: 600;
+}
+
+.day-delta-meta {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.day-delta-value {
+  font-weight: 700;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+}
+
+.day-delta-value.up   { color: var(--green); }
+.day-delta-value.down { color: var(--red); }
+
+.stats-footnote {
+  font-size: 0.68rem;
+  color: #555;
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+/* ---------- COINCIDENCIAS ---------- */
+.coincidencias-counter {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.duel-leaderboard {
+  margin-bottom: 1.25rem;
+}
+
+.duel-leaderboard-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+}
+
+.duel-leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.duel-leaderboard-row {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.duel-leaderboard-alias {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duel-leaderboard-bar-wrap {
+  background: var(--bg3);
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.duel-leaderboard-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #ffb300);
+  border-radius: 4px;
+}
+
+.duel-leaderboard-value {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.duel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.duel-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+}
+
+.duel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-bottom: 0.4rem;
+}
+
+.duel-alias {
+  font-weight: 600;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duel-alias.right { text-align: right; }
+
+.duel-score {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.duel-score.muted {
+  font-family: inherit;
+  font-weight: 400;
+  font-size: 0.68rem;
+  color: #666;
+}
+
+.duel-bar-wrap {
+  background: var(--bg2);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.duel-bar-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 4px;
+}
+
+.duel-caption {
+  margin-top: 0.4rem;
+  font-size: 0.66rem;
+  color: #666;
+  text-align: center;
+}
+
+.recent-matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recent-match-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+}
+
+.recent-match-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.recent-match-tag {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.62rem;
+}
+
+.recent-match-tag.same { color: var(--blue); background: rgba(125,211,252,0.1); }
+.recent-match-tag.vs   { color: var(--gold); background: rgba(240,180,41,0.1); }
+
+.recent-match-players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.recent-match-player {
+  display: grid;
+  grid-template-columns: 90px 100px 80px auto;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  padding: 2px 0;
+  border-left: 3px solid transparent;
+  padding-left: 0.5rem;
+}
+
+.recent-match-player.win  { border-left-color: var(--green); }
+.recent-match-player.loss { border-left-color: var(--red); }
+
+.recent-match-player-alias { font-weight: 600; }
+.recent-match-player-champ,
+.recent-match-player-kda   { color: var(--text-muted); }
+
+.recent-match-player-result {
+  text-align: right;
+  font-weight: 600;
+}
+
+.recent-match-player.win  .recent-match-player-result { color: var(--green); }
+.recent-match-player.loss .recent-match-player-result { color: var(--red); }
+
+.stats-load-more {
+  display: block;
+  margin: 0.75rem auto 0;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: #9aa0a6;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stats-load-more:hover {
+  color: white;
+  border-color: #555;
+}

@@ -8,6 +8,8 @@ import PredictionPanel from "@/components/PredictionPanel"
 import Countdown from "@/components/Countdown"
 import PlayerProfile from "@/components/PlayerProfile"
 import RightPanel from "@/components/RightPanel"
+import StatsPage from "@/components/StatsPage"
+import LiveGamesPage from "@/components/LiveGamesPage"
 import { EVENT_END, EVENT_START } from "@/constants/events"
 import type { ParticipantRow } from "@/types/ParticipantsRow"
 import type { PlayerSnapshots } from "@/types/Snapshot"
@@ -16,14 +18,16 @@ import { calcWinrate } from "@/utils/CalcWinrate"
 
 const controller = new ParticipantsController()
 
-type View      = "table" | "player"
-type MobileTab = "table" | "streams" | "prediction" | "progress"
+type View      = "table" | "player" | "stats" | "live"
+type MobileTab = "table" | "streams" | "prediction" | "progress" | "stats" | "live"
 
 const MOBILE_TABS: { id: MobileTab; icon: string; label: string }[] = [
   { id: "table",      icon: "🏆", label: "Tabla"      },
+  { id: "live",       icon: "🎮", label: "En Vivo"    },
   { id: "streams",    icon: "📺", label: "Streams"    },
   { id: "prediction", icon: "🔮", label: "Predicción" },
   { id: "progress",   icon: "📈", label: "Progreso"   },
+  { id: "stats",      icon: "📊", label: "Stats"      },
 ]
 
 export default function HomePage() {
@@ -133,7 +137,30 @@ export default function HomePage() {
         <div className="page-wrapper">
           <div className="page-body">
             <main className="body-main">
-              {view === "table" ? (
+              {view !== "player" && (
+                <nav className="section-nav">
+                  <button
+                    className={`section-nav-btn${view === "table" ? " active" : ""}`}
+                    onClick={() => setView("table")}
+                  >
+                    Ranking
+                  </button>
+                  <button
+                    className={`section-nav-btn${view === "live" ? " active" : ""}`}
+                    onClick={() => setView("live")}
+                  >
+                    Live Games
+                  </button>
+                  <button
+                    className={`section-nav-btn${view === "stats" ? " active" : ""}`}
+                    onClick={() => setView("stats")}
+                  >
+                    Estadísticas
+                  </button>
+                </nav>
+              )}
+
+              {view === "table" && (
                 <>
                   <ParticipantsTable
                     rows={rows}
@@ -146,14 +173,18 @@ export default function HomePage() {
                     <PredictionPanel entries={predictions} />
                   </div>
                 </>
-              ) : (
-                selectedPlayer && (
-                  <PlayerProfile
-                    gameName={selectedPlayer.gameName}
-                    tagLine={selectedPlayer.tagLine}
-                    onBack={handleBack}
-                  />
-                )
+              )}
+
+              {view === "live" && <LiveGamesPage />}
+
+              {view === "stats" && <StatsPage />}
+
+              {view === "player" && selectedPlayer && (
+                <PlayerProfile
+                  gameName={selectedPlayer.gameName}
+                  tagLine={selectedPlayer.tagLine}
+                  onBack={handleBack}
+                />
               )}
             </main>
 
@@ -281,6 +312,9 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* Tab: En Vivo (Live Games) */}
+              {mobileTab === "live" && <LiveGamesPage />}
+
               {/* Tab: Streams */}
               {mobileTab === "streams" && (
                 <div className="mob-streams-panel">
@@ -297,6 +331,9 @@ export default function HomePage() {
               {mobileTab === "progress" && (
                 <RankChart players={snapshots} />
               )}
+
+              {/* Tab: Estadísticas */}
+              {mobileTab === "stats" && <StatsPage />}
             </>
           )}
         </div>

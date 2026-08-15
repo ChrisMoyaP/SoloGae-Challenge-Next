@@ -24,12 +24,17 @@ export class ParticipantsController {
   }
 
   async getAllOrdered() {
-    const [participantsRes, todayRes] = await Promise.all([
+    const [participantsRes, todayRes, insightsRes, activeGameRes] = await Promise.all([
       fetch("/api/participants"),
       fetch("/api/snapshots/today"),
+      fetch("/api/participants/insights"),
+      fetch("/api/riot/active-game"),
     ])
     const participants: BaseParticipant[] = await participantsRes.json()
     const todayMap: Record<string, number> = await todayRes.json()
+    const insightsMap: Record<string, { role: string | null; streak: boolean[]; lpUpDays: number; lpDownDays: number }> =
+      await insightsRes.json()
+    const activeGameMap: Record<string, boolean> = await activeGameRes.json()
 
     const players = await Promise.all(
       participants.map(async (base) => {
@@ -39,13 +44,27 @@ export class ParticipantsController {
         ])
 
         let lpToday: number | null = null
-        const snapshotRankValue = todayMap[`${base.gameName}#${base.tagLine}`] ?? null
+        const key = `${base.gameName}#${base.tagLine}`
+        const snapshotRankValue = todayMap[key] ?? null
         if (snapshotRankValue !== null && data.soloQ) {
           const currentRankValue = calcRankValue(data.soloQ.tier, data.soloQ.rank, data.soloQ.lp)
           lpToday = currentRankValue - snapshotRankValue
         }
 
-        return { base, data, online, lpToday }
+        const insight = insightsMap[key]
+        const inGame = activeGameMap[key] ?? false
+
+        return {
+          base,
+          data,
+          online,
+          lpToday,
+          role: insight?.role ?? null,
+          streak: insight?.streak ?? [],
+          lpUpDays: insight?.lpUpDays ?? 0,
+          lpDownDays: insight?.lpDownDays ?? 0,
+          inGame,
+        }
       })
     )
 

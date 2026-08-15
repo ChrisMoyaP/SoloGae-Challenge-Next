@@ -10,4 +10,9 @@ export type ParticipantRow = {
   data: RiotPlayer
   online: boolean
   lpToday: number | null
+  role: string | null
+  streak: boolean[]
+  lpUpDays: number
+  lpDownDays: number
+  inGame: boolean
 }

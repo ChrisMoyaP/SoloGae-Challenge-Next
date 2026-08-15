@@ -47,6 +47,36 @@ export async function GET() {
     )
   `
 
+  // Cachear el PUUID resuelto de Riot para no repetir la llamada a account/v1 en cada ingesta
+  await sql`ALTER TABLE participants ADD COLUMN IF NOT EXISTS puuid TEXT`
+
+  // Historial de partidas por participante (para Tops, Coincidencias, Duelos, Racha, etc.)
+  await sql`
+    CREATE TABLE IF NOT EXISTS match_participants (
+      id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      match_id              TEXT NOT NULL,
+      participant_id        UUID REFERENCES participants(id),
+      game_start_timestamp  BIGINT NOT NULL,
+      game_duration         INTEGER NOT NULL,
+      champion_name         TEXT NOT NULL,
+      win                   BOOLEAN NOT NULL,
+      kills                 INTEGER NOT NULL,
+      deaths                INTEGER NOT NULL,
+      assists               INTEGER NOT NULL,
+      team_id               INTEGER NOT NULL,
+      team_position         TEXT,
+      total_minions_killed  INTEGER NOT NULL DEFAULT 0,
+      kill_participation    DOUBLE PRECISION,
+      damage_per_minute     DOUBLE PRECISION,
+      keystone_id           INTEGER,
+      item0 INTEGER, item1 INTEGER, item2 INTEGER,
+      item3 INTEGER, item4 INTEGER, item5 INTEGER,
+      participants_json     JSONB NOT NULL,
+      created_at            TIMESTAMP DEFAULT NOW(),
+      UNIQUE (match_id, participant_id)
+    )
+  `
+
   // Verificar si ya hay datos
   const existing = await sql`SELECT COUNT(*)::int AS count FROM participants`
   if ((existing[0].count as number) > 0) {
