@@ -95,14 +95,14 @@ async function getNewMatchIds(puuid: string, existingIds: Set<string>): Promise<
   return newIds
 }
 
-export async function POST(req: NextRequest) {
+function isAuthorized(req: NextRequest): boolean {
   const auth  = req.headers.get("authorization") ?? ""
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : ""
 
-  if (!token || token !== process.env.SNAPSHOT_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  return !!token && (token === process.env.SNAPSHOT_SECRET || token === process.env.CRON_SECRET)
+}
 
+async function runIngestion() {
   const participants = await sql`
     SELECT id, game_name, tag_line, puuid FROM participants WHERE active = true
   ` as { id: string; game_name: string; tag_line: string; puuid: string | null }[]
@@ -176,11 +176,27 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({
+  return {
     total: participants.length,
     participantsProcessed,
     matchesIngested,
     failed,
     ...(errors.length > 0 && { errors }),
-  })
+  }
+}
+
+// Uso manual (script .ps1, curl, etc.) con SNAPSHOT_SECRET.
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json(await runIngestion())
+}
+
+// Vercel Cron invoca por GET y manda Authorization: Bearer $CRON_SECRET automáticamente.
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json(await runIngestion())
 }
