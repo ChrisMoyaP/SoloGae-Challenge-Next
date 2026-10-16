@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
+import { withServerCache } from "@/lib/serverCache"
 
 const STREAK_LENGTH = 10
 
@@ -33,60 +34,64 @@ function mode(values: string[]): string | null {
 }
 
 export async function GET() {
-  const [matchRows, snapshotRows] = await Promise.all([
-    sql`
-      SELECT p.game_name, p.tag_line, mp.team_position, mp.win, mp.game_start_timestamp
-      FROM match_participants mp
-      JOIN participants p ON p.id = mp.participant_id
-      WHERE p.active = true
-      ORDER BY mp.game_start_timestamp DESC
-    ` as unknown as Promise<MatchRow[]>,
-    sql`
-      SELECT p.game_name, p.tag_line, rs.snapshot_date::text, rs.rank_value
-      FROM rank_snapshots rs
-      JOIN participants p ON p.id = rs.participant_id
-      WHERE p.active = true
-      ORDER BY rs.snapshot_date ASC
-    ` as unknown as Promise<SnapshotRow[]>,
-  ])
+  const result = await withServerCache("api:participants:insights", 180, async () => {
+    const [matchRows, snapshotRows] = await Promise.all([
+      sql`
+        SELECT p.game_name, p.tag_line, mp.team_position, mp.win, mp.game_start_timestamp
+        FROM match_participants mp
+        JOIN participants p ON p.id = mp.participant_id
+        WHERE p.active = true
+        ORDER BY mp.game_start_timestamp DESC
+      ` as unknown as Promise<MatchRow[]>,
+      sql`
+        SELECT p.game_name, p.tag_line, rs.snapshot_date::text, rs.rank_value
+        FROM rank_snapshots rs
+        JOIN participants p ON p.id = rs.participant_id
+        WHERE p.active = true
+        ORDER BY rs.snapshot_date ASC
+      ` as unknown as Promise<SnapshotRow[]>,
+    ])
 
-  const result: Record<string, Insight> = {}
+    const map: Record<string, Insight> = {}
 
-  // Rol dominante + racha (últimas STREAK_LENGTH partidas, ya vienen ordenadas desc)
-  const matchesByPlayer = new Map<string, MatchRow[]>()
-  for (const row of matchRows) {
-    const key = `${row.game_name}#${row.tag_line}`
-    if (!matchesByPlayer.has(key)) matchesByPlayer.set(key, [])
-    matchesByPlayer.get(key)!.push(row)
-  }
-  for (const [key, matches] of matchesByPlayer) {
-    result[key] = {
-      role: mode(matches.map((m) => m.team_position ?? "")),
-      streak: matches.slice(0, STREAK_LENGTH).map((m) => m.win),
-      lpUpDays: 0,
-      lpDownDays: 0,
+    const matchesByPlayer = new Map<string, MatchRow[]>()
+    for (const row of matchRows) {
+      const key = `${row.game_name}#${row.tag_line}`
+      if (!matchesByPlayer.has(key)) matchesByPlayer.set(key, [])
+      matchesByPlayer.get(key)!.push(row)
     }
-  }
-
-  // Subidas/bajadas de LP: diferencia entre snapshots consecutivos por jugador
-  const snapshotsByPlayer = new Map<string, SnapshotRow[]>()
-  for (const row of snapshotRows) {
-    const key = `${row.game_name}#${row.tag_line}`
-    if (!snapshotsByPlayer.has(key)) snapshotsByPlayer.set(key, [])
-    snapshotsByPlayer.get(key)!.push(row)
-  }
-  for (const [key, snapshots] of snapshotsByPlayer) {
-    let up = 0
-    let down = 0
-    for (let i = 1; i < snapshots.length; i++) {
-      const delta = snapshots[i].rank_value - snapshots[i - 1].rank_value
-      if (delta > 0) up++
-      else if (delta < 0) down++
+    for (const [key, matches] of matchesByPlayer) {
+      map[key] = {
+        role: mode(matches.map((m) => m.team_position ?? "")),
+        streak: matches.slice(0, STREAK_LENGTH).map((m) => m.win),
+        lpUpDays: 0,
+        lpDownDays: 0,
+      }
     }
-    if (!result[key]) result[key] = { role: null, streak: [], lpUpDays: 0, lpDownDays: 0 }
-    result[key].lpUpDays = up
-    result[key].lpDownDays = down
-  }
 
-  return NextResponse.json(result)
+    const snapshotsByPlayer = new Map<string, SnapshotRow[]>()
+    for (const row of snapshotRows) {
+      const key = `${row.game_name}#${row.tag_line}`
+      if (!snapshotsByPlayer.has(key)) snapshotsByPlayer.set(key, [])
+      snapshotsByPlayer.get(key)!.push(row)
+    }
+    for (const [key, snapshots] of snapshotsByPlayer) {
+      let up = 0
+      let down = 0
+      for (let i = 1; i < snapshots.length; i++) {
+        const delta = snapshots[i].rank_value - snapshots[i - 1].rank_value
+        if (delta > 0) up++
+        else if (delta < 0) down++
+      }
+      if (!map[key]) map[key] = { role: null, streak: [], lpUpDays: 0, lpDownDays: 0 }
+      map[key].lpUpDays = up
+      map[key].lpDownDays = down
+    }
+
+    return map
+  })
+
+  return NextResponse.json(result, {
+    headers: { "Cache-Control": "public, s-maxage=180, stale-while-revalidate=360" },
+  })
 }

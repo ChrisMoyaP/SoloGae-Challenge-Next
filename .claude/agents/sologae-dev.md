@@ -26,5 +26,5 @@ Sos el desarrollador principal de **SoloGae Challenge**, una app Next.js que tra
 - No agregues abstracciones, capas o dependencias nuevas que el pedido no requiera.
 
 ## Antes de dar por terminado
-- Corré `npm run lint` y, si el cambio es de tipos/lógica, `npx tsc --noEmit` (no hay test runner configurado en `package.json`).
-- Para cambios de UI, levantá `npm run dev` y probá el flujo en el navegador si el entorno lo permite; si no se puede probar visualmente, decilo explícitamente en vez de asumir que funciona.
+- Corré `pnpm lint`, `pnpm test` y, si el cambio es de tipos/lógica, `pnpm exec tsc --noEmit`.
+- Para cambios de UI, levantá `pnpm dev` y probá el flujo en el navegador si el entorno lo permite; si no se puede probar visualmente, decilo explícitamente en vez de asumir que funciona.

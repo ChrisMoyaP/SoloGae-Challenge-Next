@@ -1,64 +1,55 @@
-/* Contenedor principal — llena el .side-stream */
 .right-panel {
   width: 100%;
-  height: 100%;
+  min-height: 180px;
   display: flex;
   flex-direction: column;
   position: relative;
   background: var(--bg2);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
-/* ── Estado vacío ── */
 .streams-empty {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #444;
+  color: var(--text-muted);
   font-size: 0.85rem;
+  text-align: center;
+  padding: 2rem 1rem;
 }
 
-/* ── Lista vertical de miniaturas ── */
 .streams-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 0.75rem;
-  overflow-y: auto;
-  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem;
+  padding: 0.85rem;
 }
-
-/* Scrollbar discreta */
-.streams-grid::-webkit-scrollbar { width: 3px; }
-.streams-grid::-webkit-scrollbar-track { background: transparent; }
-.streams-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
 
 .stream-card {
-  background: none;
-  border: 2px solid transparent;
+  background: var(--bg3);
+  border: 1px solid var(--border);
   cursor: pointer;
-  padding: 0;
+  padding: 0.45rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  border-radius: 6px;
-  flex-shrink: 0;
-  transition: border-color 0.15s;
+  gap: 0.45rem;
+  border-radius: 10px;
+  transition: border-color 0.16s, transform 0.16s;
 }
 
 .stream-card:hover {
-  border-color: #9147ff;
+  border-color: var(--purple);
+  transform: translateY(-2px);
 }
 
-/* Thumbnail — altura fija */
 .stream-thumb-wrapper {
   position: relative;
   width: 100%;
-  height: 140px;
+  height: 136px;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: 7px;
 }
 
 .stream-thumb {
@@ -68,36 +59,37 @@
   display: block;
 }
 
-/* Badge EN VIVO */
 .stream-live-badge {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  background: #e91916;
+  top: 6px;
+  left: 6px;
+  background: var(--coral);
   color: #fff;
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 3px;
+  padding: 2px 7px;
+  border-radius: 99px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .stream-name {
-  color: #fff;
-  font-size: 0.75rem;
+  color: var(--ivory);
+  font-size: 0.82rem;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
-  padding: 0 2px;
+  text-align: left;
+  padding: 0 4px 2px;
 }
 
-/* ── Modal de stream ── */
+/* Modal de stream */
 .stream-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
+  background: rgba(8, 10, 15, 0.85);
+  backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -111,7 +103,7 @@
   max-width: calc(100vw - 2rem);
   max-height: calc(100vh - 4rem);
   background: #000;
-  border-radius: 10px;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--border);
 }
@@ -121,12 +113,12 @@
   top: 0.6rem;
   right: 0.6rem;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  border: none;
+  background: rgba(15, 17, 23, 0.85);
+  color: var(--ivory);
+  border: 1px solid var(--border);
   border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
+  width: 2.1rem;
+  height: 2.1rem;
   cursor: pointer;
   font-size: 0.85rem;
   display: flex;
@@ -136,7 +128,7 @@
 }
 
 .stream-modal-close:hover {
-  background: rgba(0, 0, 0, 0.95);
+  background: var(--coral);
 }
 
 .stream-modal-iframe {
