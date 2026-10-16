@@ -820,11 +820,28 @@ body {
 @media (max-width: 860px) {
   .sg-hero {
     grid-template-columns: 1fr;
-    padding: 1.85rem 1.5rem;
+    padding: 1.75rem 1.35rem;
+    gap: 1.35rem;
+    min-height: auto;
   }
 
   .sg-hero-visual {
-    display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    min-height: auto;
+    width: 100%;
+  }
+
+  .sg-hero-art-card {
+    flex: 1 1 240px;
+  }
+
+  .sg-hero-motto {
+    margin-top: 0;
+    text-align: left;
   }
 
   .sg-summary-grid {
@@ -851,10 +868,11 @@ body {
   }
 
   .sg-recent-item {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto;
+    row-gap: 0.35rem;
   }
 
   .sg-recent-time {
-    display: none;
+    font-size: 0.7rem;
   }
 }

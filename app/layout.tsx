@@ -17,9 +17,9 @@ const rajdhani = Rajdhani({
 })
 
 export const metadata: Metadata = {
-  title: "SOLOGAE — Plataforma Competitiva & Leaderboard",
+  title: "SOLOGAE",
   description:
-    "Compite en desafíos, asciende en el ranking y forma parte de la comunidad competitiva de SoloGae Challenge - League of Legends.",
+    "Compite en SoloGae Challenge - Escala y supera a Diego en cantidad de juegos.",
 }
 
 export default function RootLayout({

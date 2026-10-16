@@ -46,7 +46,9 @@ export default function HomePage() {
   const [rows, setRows] = useState<ParticipantRow[]>([])
   const [loading, setLoading] = useState(true)
   const [predictions, setPredictions] = useState<PredictionEntry[]>([])
-  const [recentMatches, setRecentMatches] = useState<RecentTournamentMatch[]>([])
+  const [recentMatches, setRecentMatches] = useState<RecentTournamentMatch[]>(
+    [],
+  )
 
   const PRICE_PER_PLAYER = 10_000
   const activePlayers = rows.filter((p) => p.base.twitch !== "RETIRADO").length
@@ -87,8 +89,7 @@ export default function HomePage() {
             GRANDES JUGADORES HACEN <span className="accent">HISTORIA</span>
           </h1>
           <p className="sg-hero-desc">
-            Compite en desafíos, asciende en el ranking de SoloQ y forma parte
-            de una comunidad que vive el juego al máximo.
+            Compite en desafíos, asciende en el ranking de SoloQ. Escala y supera a Diego en cantidad de juegos.
           </p>
           <div className="sg-hero-actions">
             <Link href="/ranking" className="sg-btn sg-btn-primary">
