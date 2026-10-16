@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import sql from "@/lib/db"
 
 const SEED = [
@@ -17,7 +17,16 @@ const SEED = [
   { gameName: "SoySebane",      tagLine: "SANV", alias: "Sebastian",       twitch: null                 },
 ]
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const secret = process.env.SNAPSHOT_SECRET
+  if (secret) {
+    const auth = req.headers.get("authorization") ?? ""
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : ""
+    if (token !== secret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+  }
+
   // Crear tabla si no existe
   await sql`
     CREATE TABLE IF NOT EXISTS participants (

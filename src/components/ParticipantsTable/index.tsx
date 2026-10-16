@@ -7,6 +7,7 @@ import { ROLE_LABEL, ROLE_ORDER } from "../../constants/roles"
 import { buildOpggUrl } from "../../utils/OpGG"
 import { calcRankValue } from "../../utils/calcRankValue"
 import { buildPlayerUrl, formatTierEs, getTierEmblemUrl } from "../../utils/playerUrl"
+import { useFavoritePlayers } from "../../hooks/useFavoritePlayers"
 import RowDetail from "./RowDetail"
 import "./styles.css"
 import { Fragment, useEffect, useMemo, useState } from "react"
@@ -29,8 +30,6 @@ type SortKey =
   | "winrate"
   | "games"
   | "lpToday"
-
-const FAVORITES_KEY = "sologae:favorites"
 
 const TIER_FILTERS = [
   { value: "", label: "Todos los rangos" },
@@ -66,35 +65,46 @@ const ParticipantsTable = ({
   const [roleFilter, setRoleFilter] = useState<string>("")
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [onlyInGame, setOnlyInGame] = useState(false)
-  const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
+  const { favorites, toggleFavorite } = useFavoritePlayers()
 
   useEffect(() => {
     if (initialSearch) setSearch(initialSearch)
   }, [initialSearch])
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FAVORITES_KEY)
-      if (raw) setFavorites(new Set(JSON.parse(raw) as string[]))
-    } catch {
-      // localStorage no disponible
-    }
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const t = params.get("tier")
+    const r = params.get("role")
+    const fav = params.get("fav")
+    const live = params.get("live")
+    if (t) setTierFilter(t)
+    if (r) setRoleFilter(r)
+    if (fav === "1") setOnlyFavorites(true)
+    if (live === "1") setOnlyInGame(true)
   }, [])
 
-  function toggleFavorite(key: string) {
-    setFavorites((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      try {
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next]))
-      } catch {
-        // continuar con estado en memoria
-      }
-      return next
-    })
-  }
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    if (search.trim()) params.set("q", search.trim())
+    else params.delete("q")
+    if (tierFilter) params.set("tier", tierFilter)
+    else params.delete("tier")
+    if (roleFilter) params.set("role", roleFilter)
+    else params.delete("role")
+    if (onlyFavorites) params.set("fav", "1")
+    else params.delete("fav")
+    if (onlyInGame) params.set("live", "1")
+    else params.delete("live")
+
+    const qs = params.toString()
+    const nextUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+    if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", nextUrl)
+    }
+  }, [search, tierFilter, roleFilter, onlyFavorites, onlyInGame])
 
   const onSort = (key: SortKey) => {
     if (sortKey !== key) {

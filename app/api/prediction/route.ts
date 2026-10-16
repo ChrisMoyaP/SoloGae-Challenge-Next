@@ -2,44 +2,7 @@ import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { calcRankValue } from "@/utils/calcRankValue"
 import { mapWithConcurrency, withServerCache } from "@/lib/serverCache"
-
-// ===== Riot API =====
-const AMERICAS = "https://americas.api.riotgames.com"
-const LA2      = "https://la2.api.riotgames.com"
-
-function riotHeaders() {
-  return { "X-Riot-Token": process.env.RIOT_API_KEY ?? "" }
-}
-
-interface RankedEntry {
-  queueType: string
-  tier: string
-  rank: string
-  leaguePoints: number
-  wins: number
-  losses: number
-}
-
-async function getCurrentRanked(gameName: string, tagLine: string): Promise<RankedEntry | null> {
-  const key = `riot:ranked-entry:${gameName.toLowerCase()}#${tagLine.toLowerCase()}`
-  return withServerCache(key, 180, async () => {
-    const accountRes = await fetch(
-      `${AMERICAS}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
-      { headers: riotHeaders() }
-    )
-    if (!accountRes.ok) return null
-    const account = await accountRes.json() as { puuid: string }
-
-    const leagueRes = await fetch(
-      `${LA2}/lol/league/v4/entries/by-puuid/${account.puuid}`,
-      { headers: riotHeaders() }
-    )
-    if (!leagueRes.ok) return null
-    const entries = await leagueRes.json() as RankedEntry[]
-
-    return entries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null
-  })
-}
+import { fetchRiotPlayerSoloQ } from "@/services/RiotServerService"
 
 // ===== DB types =====
 interface ParticipantDB {
@@ -47,6 +10,7 @@ interface ParticipantDB {
   game_name: string
   tag_line: string
   alias: string
+  puuid?: string | null
 }
 
 interface SnapshotAvg {
@@ -58,7 +22,7 @@ export async function GET() {
   const final = await withServerCache("api:prediction:result", 300, async () => {
     const [participants, snapshotAvgs] = await Promise.all([
       sql`
-        SELECT id, game_name, tag_line, alias
+        SELECT id, game_name, tag_line, alias, puuid
         FROM participants
         WHERE active = true
       ` as unknown as Promise<ParticipantDB[]>,
@@ -79,10 +43,11 @@ export async function GET() {
       participants,
       4,
       async (p) => {
-        const ranked = await getCurrentRanked(p.game_name, p.tag_line)
+        const riotData = await fetchRiotPlayerSoloQ(p.game_name, p.tag_line, p.puuid).catch(() => null)
+        const ranked = riotData?.soloQ ?? null
 
         const currentRankValue = ranked
-          ? calcRankValue(ranked.tier, ranked.rank, ranked.leaguePoints)
+          ? calcRankValue(ranked.tier, ranked.rank, ranked.lp)
           : 0
 
         const totalGames = ranked ? ranked.wins + ranked.losses : 0

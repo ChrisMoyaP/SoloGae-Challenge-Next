@@ -13,6 +13,7 @@ export async function GET() {
         p.game_name   AS "gameName",
         p.tag_line    AS "tagLine",
         p.alias,
+        p.puuid,
         COALESCE(s.rank_value, 0) AS "snapshotRankValue"
       FROM participants p
       LEFT JOIN LATERAL (
@@ -23,14 +24,14 @@ export async function GET() {
         LIMIT 1
       ) s ON true
       WHERE p.active = true
-    ` as { gameName: string; tagLine: string; alias: string; snapshotRankValue: number }[]
+    ` as { gameName: string; tagLine: string; alias: string; puuid?: string | null; snapshotRankValue: number }[]
 
     const withLive = await mapWithConcurrency(
       rows,
       4,
       async (row) => {
         try {
-          const riotData = await fetchRiotPlayerSoloQ(row.gameName, row.tagLine)
+          const riotData = await fetchRiotPlayerSoloQ(row.gameName, row.tagLine, row.puuid)
           const soloQ = riotData.soloQ
 
           if (!soloQ) return { ...row, tier: null, rank: null, lp: 0, wins: 0, losses: 0, wr: 0, rankValue: 0 }

@@ -1,21 +1,23 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
+import dynamic from "next/dynamic"
 import LiveBadge from "./LiveBadge"
 import "./styles.css"
 import type { PlayerProfileData } from "@/types/PlayerProfile"
 import type { PlayerSnapshots } from "@/types/Snapshot"
+import { useFavoritePlayers } from "@/hooks/useFavoritePlayers"
 import { buildOpggUrl } from "@/utils/OpGG"
 import { DDVERSION, formatTierEs, getTierEmblemUrl } from "@/utils/playerUrl"
+
+const TrendChart = dynamic(() => import("./TrendChart"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: "0.82rem" }}>
+      Cargando tendencia...
+    </div>
+  ),
+})
 
 interface Props {
   gameName: string
@@ -59,8 +61,6 @@ const POSITION_ES: Record<string, string> = {
   BOTTOM: "ADC",
   UTILITY: "Support",
 }
-
-const FAVORITES_KEY = "sologae:favorites"
 
 let cachedRunes: RuneEntry[] | null = null
 
@@ -176,36 +176,13 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null)
   const [runes, setRunes] = useState<RuneEntry[] | null>(cachedRunes)
   const [activeTab, setActiveTab] = useState<ProfileTab>("resumen")
-  const [following, setFollowing] = useState(false)
+  const { isFavorite, toggleFavorite } = useFavoritePlayers()
 
   const playerKey = `${gameName}#${tagLine}`
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FAVORITES_KEY)
-      if (raw) {
-        const set = new Set(JSON.parse(raw) as string[])
-        setFollowing(set.has(playerKey))
-      }
-    } catch {
-      // ignore
-    }
-  }, [playerKey])
+  const following = isFavorite(playerKey)
 
   function toggleFollow() {
-    setFollowing((prev) => {
-      const nextState = !prev
-      try {
-        const raw = localStorage.getItem(FAVORITES_KEY)
-        const set = new Set(raw ? (JSON.parse(raw) as string[]) : [])
-        if (nextState) set.add(playerKey)
-        else set.delete(playerKey)
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify([...set]))
-      } catch {
-        // ignore
-      }
-      return nextState
-    })
+    toggleFavorite(playerKey)
   }
 
   useEffect(() => {
@@ -615,67 +592,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                 </div>
 
                 <div style={{ width: "100%", height: 210 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={trendData}
-                      margin={{ top: 8, right: 12, left: -16, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id="sgTealGrad"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#00E5C2"
-                            stopOpacity={0.35}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#7C3AED"
-                            stopOpacity={0.02}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="var(--border)"
-                      />
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fill: "#8B95A5", fontSize: 11 }}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        domain={["auto", "auto"]}
-                        tick={{ fill: "#8B95A5", fontSize: 11 }}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: "var(--bg3)",
-                          border: "1px solid var(--border)",
-                          borderRadius: 8,
-                          fontSize: 12,
-                          color: "var(--ivory)",
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        name="Puntaje de Rango"
-                        stroke="#00E5C2"
-                        strokeWidth={2.5}
-                        fill="url(#sgTealGrad)"
-                        dot={{ r: 3, fill: "#00E5C2" }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <TrendChart data={trendData} />
                 </div>
               </div>
 

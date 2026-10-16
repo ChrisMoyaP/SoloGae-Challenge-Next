@@ -1,10 +1,12 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import type { LiveGame, LiveGamesResponse } from "@/types/LiveGame"
+import { usePageVisibilityPoll } from "@/hooks/usePageVisibilityPoll"
+import { DDVERSION } from "@/utils/playerUrl"
 import "./styles.css"
 
-const DDVERSION = "14.24.1"
 const POLL_MS = 30_000
 
 function formatElapsed(seconds: number): string {
@@ -14,20 +16,27 @@ function formatElapsed(seconds: number): string {
   return `${m}:${s}`
 }
 
-function GameCard({ game }: { game: LiveGame }) {
+function GameCard({ game, extraSeconds }: { game: LiveGame; extraSeconds: number }) {
   const blueTeam = game.players.filter((p) => p.teamId === 100)
   const redTeam  = game.players.filter((p) => p.teamId === 200)
+  const elapsed = Math.max(0, game.gameLengthSeconds + extraSeconds)
 
   return (
     <div className="live-game-card">
       <div className="live-game-header">
         <div className="live-game-tracked">
           {game.trackedAliases.map((alias) => (
-            <span key={alias} className="live-game-tracked-badge">{alias}</span>
+            <Link
+              key={alias}
+              href={`/ranking?q=${encodeURIComponent(alias)}`}
+              className="live-game-tracked-badge"
+            >
+              {alias}
+            </Link>
           ))}
         </div>
         <span className="live-game-queue">{game.queueName}</span>
-        <span className="live-game-clock">🔴 {formatElapsed(game.gameLengthSeconds)}</span>
+        <span className="live-game-clock">● EN PARTIDA · {formatElapsed(elapsed)}</span>
       </div>
 
       <div className="live-game-teams">
@@ -41,6 +50,8 @@ function GameCard({ game }: { game: LiveGame }) {
                   <img
                     src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${p.championName}.png`}
                     alt={p.championName}
+                    loading="lazy"
+                    decoding="async"
                     className="live-game-champ-icon"
                   />
                   <div className="live-game-player-info">
@@ -62,20 +73,34 @@ function GameCard({ game }: { game: LiveGame }) {
 export default function LiveGamesPage() {
   const [games, setGames] = useState<LiveGame[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchedAt, setFetchedAt] = useState<number>(() => Date.now())
+  const [now, setNow] = useState<number>(() => Date.now())
 
-  function load() {
-    fetch("/api/riot/live-games")
-      .then((r) => (r.ok ? r.json() as Promise<LiveGamesResponse> : null))
-      .then((d) => { if (d) setGames(d.games) })
+  function load(signal?: AbortSignal) {
+    fetch("/api/riot/live-games", { signal })
+      .then((r) => (r.ok ? (r.json() as Promise<LiveGamesResponse>) : null))
+      .then((d) => {
+        if (d) {
+          setGames(d.games)
+          const ts = Date.now()
+          setFetchedAt(ts)
+          setNow(ts)
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }
 
+  usePageVisibilityPoll(load, POLL_MS)
+
   useEffect(() => {
-    load()
-    const id = setInterval(load, POLL_MS)
+    if (games.length === 0) return
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return
+      setNow(Date.now())
+    }, 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [games.length])
 
   if (loading) {
     return <div className="live-games-loading">Consultando partidas en vivo...</div>
@@ -89,11 +114,13 @@ export default function LiveGamesPage() {
     )
   }
 
+  const extraSeconds = Math.max(0, Math.floor((now - fetchedAt) / 1000))
+
   return (
     <div className="live-games-page">
       <div className="live-games-grid">
         {games.map((g) => (
-          <GameCard key={g.gameId} game={g} />
+          <GameCard key={g.gameId} game={g} extraSeconds={extraSeconds} />
         ))}
       </div>
     </div>

@@ -20,13 +20,15 @@ const CLIENT_CACHE_TTL_MS = 60_000
 export class ParticipantsController {
   private participantService: ParticipantsService
   private twitchService: TwitchService
+  private hasCustomServices: boolean
 
   constructor(
-    participantService = new ParticipantsService(),
-    twitchService = new TwitchService(),
+    participantService?: ParticipantsService,
+    twitchService?: TwitchService,
   ) {
-    this.participantService = participantService
-    this.twitchService = twitchService
+    this.hasCustomServices = Boolean(participantService || twitchService)
+    this.participantService = participantService ?? new ParticipantsService()
+    this.twitchService = twitchService ?? new TwitchService()
   }
 
   async getAllOrdered(forceReload = false): Promise<ParticipantRow[]> {
@@ -40,7 +42,11 @@ export class ParticipantsController {
       return inFlightLoad
     }
 
-    const loadPromise = this.fetchAllOrdered()
+    const loadPromise =
+      !isTest && !this.hasCustomServices
+        ? this.fetchFromLeaderboardEndpoint()
+        : this.fetchAllOrdered()
+
     if (!isTest) {
       inFlightLoad = loadPromise
     }
@@ -57,6 +63,18 @@ export class ParticipantsController {
         inFlightLoad = null
       }
     }
+  }
+
+  private async fetchFromLeaderboardEndpoint(): Promise<ParticipantRow[]> {
+    try {
+      const res = await fetch("/api/leaderboard")
+      if (res.ok) {
+        return (await res.json()) as ParticipantRow[]
+      }
+    } catch {
+      // Fallback al flujo individual si el endpoint agregado falla
+    }
+    return this.fetchAllOrdered()
   }
 
   private async fetchAllOrdered(): Promise<ParticipantRow[]> {

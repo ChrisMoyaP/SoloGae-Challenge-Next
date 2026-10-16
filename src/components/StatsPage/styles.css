@@ -89,7 +89,7 @@
 
 .stat-top-list li.first .stat-top-alias,
 .stat-top-list li.first .stat-top-value {
-  color: var(--gold);
+  color: var(--teal);
   font-weight: 700;
 }
 
@@ -99,19 +99,28 @@
 }
 
 .stat-top-alias {
+  color: var(--ivory);
+  text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.stat-top-alias:hover {
+  color: var(--teal);
 }
 
 .stat-top-value {
   font-weight: 600;
+  font-family: var(--font-display), 'Rajdhani', sans-serif;
+  font-size: 0.92rem;
 }
 
 .stat-top-games {
   grid-column: 2 / span 2;
   font-size: 0.66rem;
-  color: #666;
+  color: var(--text-dim);
 }
 
 /* ---------- MEJORES DÍAS ---------- */
@@ -124,18 +133,19 @@
 .day-tab {
   background: var(--bg3);
   border: 1px solid var(--border);
-  color: #9aa0a6;
-  border-radius: 6px;
-  padding: 0.4rem 0.85rem;
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 0.42rem 0.9rem;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .day-tab.active {
-  color: var(--gold);
-  border-color: var(--gold);
-  background: rgba(240, 180, 41, 0.08);
+  color: var(--teal);
+  border-color: rgba(0, 229, 194, 0.4);
+  background: var(--teal-dim);
 }
 
 .day-delta-list {
@@ -153,13 +163,15 @@
   align-items: center;
   gap: 0.75rem;
   background: var(--bg3);
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
   font-size: 0.82rem;
 }
 
 .day-delta-alias {
   font-weight: 600;
+  color: var(--ivory);
 }
 
 .day-delta-meta {
@@ -169,26 +181,26 @@
 
 .day-delta-value {
   font-weight: 700;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-display), 'Rajdhani', sans-serif;
   font-size: 1rem;
 }
 
-.day-delta-value.up   { color: var(--green); }
-.day-delta-value.down { color: var(--red); }
+.day-delta-value.up   { color: var(--teal); }
+.day-delta-value.down { color: var(--coral); }
 
 .stats-footnote {
   font-size: 0.68rem;
-  color: #555;
+  color: var(--text-dim);
   margin-top: 0.75rem;
   margin-bottom: 0;
 }
 
 /* ---------- COINCIDENCIAS ---------- */
 .coincidencias-counter {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1.1rem;
+  font-family: var(--font-display), 'Rajdhani', sans-serif;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--teal);
   margin-bottom: 1rem;
 }
 
@@ -199,7 +211,7 @@
 .duel-leaderboard-title {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #ccc;
+  color: var(--ivory);
   margin-bottom: 0.5rem;
 }
 
@@ -229,15 +241,15 @@
 
 .duel-leaderboard-bar-wrap {
   background: var(--bg3);
-  border-radius: 4px;
+  border-radius: 99px;
   height: 8px;
   overflow: hidden;
 }
 
 .duel-leaderboard-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ffd700, #ffb300);
-  border-radius: 4px;
+  background: linear-gradient(90deg, var(--teal), var(--purple));
+  border-radius: 99px;
 }
 
 .duel-leaderboard-value {
@@ -256,8 +268,8 @@
 .duel-card {
   background: var(--bg3);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
 }
 
 .duel-row {
@@ -279,9 +291,9 @@
 .duel-alias.right { text-align: right; }
 
 .duel-score {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-display), 'Rajdhani', sans-serif;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--teal);
 }
 
 .duel-score.muted {

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import type { LiveGame, LiveGamePlayer } from "@/types/LiveGame"
 import { mapWithConcurrency, withServerCache } from "@/lib/serverCache"
+import { DDVERSION } from "@/utils/playerUrl"
 
 const LA2 = "https://la2.api.riotgames.com"
-const DDVERSION = "14.24.1"
 
 function riotHeaders() {
   return { "X-Riot-Token": process.env.RIOT_API_KEY ?? "" }

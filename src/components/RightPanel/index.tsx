@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { usePageVisibilityPoll } from "@/hooks/usePageVisibilityPoll"
 import "./styles.css"
 
 interface LiveStreamer {
@@ -19,10 +20,10 @@ export default function RightPanel({ onStreamersChange }: Props) {
   const [watching, setWatching] = useState<string | null>(null)
   const fetching = useRef(false)
 
-  function fetchLive() {
+  function fetchLive(signal?: AbortSignal) {
     if (fetching.current) return
     fetching.current = true
-    fetch("/api/twitch/live")
+    fetch("/api/twitch/live", { signal })
       .then((r) => r.json())
       .then((d) => {
         const list: LiveStreamer[] = d.streamers ?? []
@@ -35,12 +36,7 @@ export default function RightPanel({ onStreamersChange }: Props) {
       })
   }
 
-  useEffect(() => {
-    fetchLive()
-    const interval = setInterval(fetchLive, 5 * 60 * 1000)
-    return () => clearInterval(interval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  usePageVisibilityPoll(fetchLive, 5 * 60 * 1000)
 
   useEffect(() => {
     if (!watching) return
