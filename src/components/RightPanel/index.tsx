@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { usePageVisibilityPoll } from "@/hooks/usePageVisibilityPoll"
+import FallbackImage from "@/components/FallbackImage"
 import "./styles.css"
 
 interface LiveStreamer {
@@ -75,8 +76,7 @@ export default function RightPanel({ onStreamersChange }: Props) {
               aria-label={`Ver stream de ${s.alias}`}
             >
               <div className="stream-thumb-wrapper">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <FallbackImage
                   src={s.thumbnailUrl}
                   alt={s.alias}
                   className="stream-thumb"

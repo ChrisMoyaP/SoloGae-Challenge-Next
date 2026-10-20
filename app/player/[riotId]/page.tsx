@@ -1,26 +1,11 @@
-"use client"
-
-import { use } from "react"
-import { useRouter } from "next/navigation"
-import PlayerProfile from "@/components/PlayerProfile"
-import { parsePlayerSlug } from "@/utils/playerUrl"
+import PlayerPageClient from "./PlayerPageClient"
 
 interface PageProps {
   params: Promise<{ riotId: string }>
 }
 
-export default function PlayerPage({ params }: PageProps) {
-  const router = useRouter()
-  const { riotId } = use(params)
-  const { gameName, tagLine } = parsePlayerSlug(riotId)
+export default async function PlayerPage({ params }: PageProps) {
+  const { riotId } = await params
 
-  return (
-    <main className="sg-container">
-      <PlayerProfile
-        gameName={gameName}
-        tagLine={tagLine}
-        onBack={() => router.push("/ranking")}
-      />
-    </main>
-  )
+  return <PlayerPageClient riotId={riotId} />
 }

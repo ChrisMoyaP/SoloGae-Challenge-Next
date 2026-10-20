@@ -2,13 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
+import type { PlayerSnapshots } from "@/types/Snapshot"
 import LiveBadge from "./LiveBadge"
 import "./styles.css"
-import type { PlayerProfileData } from "@/types/PlayerProfile"
-import type { PlayerSnapshots } from "@/types/Snapshot"
 import { useFavoritePlayers } from "@/hooks/useFavoritePlayers"
 import { buildOpggUrl } from "@/utils/OpGG"
-import { DDVERSION, formatTierEs, getTierEmblemUrl } from "@/utils/playerUrl"
+import { formatTierEs, getTierEmblemUrl } from "@/utils/playerUrl"
+import FallbackImage from "@/components/FallbackImage"
+import {
+  getChampionImageUrl,
+  getDataDragonDataUrl,
+  getItemImageUrl,
+  getRuneImageUrl,
+} from "@/utils/dataDragon"
+import { ApiRequestError } from "@/lib/clientApi"
+import { usePlayerQuery, useSnapshotsQuery, useTournamentStatsQuery } from "@/hooks/useSharedQueries"
 
 const TrendChart = dynamic(() => import("./TrendChart"), {
   ssr: false,
@@ -25,29 +33,6 @@ interface Props {
   onBack?: () => void
 }
 
-interface TournamentPlayer {
-  gameName: string
-  tagLine: string
-  alias: string
-  position: number
-  rankValue: number
-  lp: number
-  tier: string | null
-  rank: string | null
-  wins: number
-  losses: number
-  wr: number
-}
-
-interface TournamentStats {
-  players: TournamentPlayer[]
-  avgLp: number
-  avgRankValue: number
-  minRankValue: number
-  maxRankValue: number
-  avgWr: number
-}
-
 interface RuneEntry {
   id: number
   icon: string
@@ -61,6 +46,8 @@ const POSITION_ES: Record<string, string> = {
   BOTTOM: "ADC",
   UTILITY: "Support",
 }
+
+const EMPTY_SNAPSHOTS: PlayerSnapshots[] = []
 
 let cachedRunes: RuneEntry[] | null = null
 
@@ -168,11 +155,14 @@ function ProfileDonut({ pct }: { pct: number }) {
 }
 
 export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
-  const [data, setData] = useState<PlayerProfileData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [tournament, setTournament] = useState<TournamentStats | null>(null)
-  const [snapshots, setSnapshots] = useState<PlayerSnapshots[]>([])
+  const playerQuery = usePlayerQuery(gameName, tagLine)
+  const tournamentQuery = useTournamentStatsQuery()
+  const snapshotsQuery = useSnapshotsQuery()
+  const data = playerQuery.data ?? null
+  const loading = playerQuery.isLoading
+  const notFound = playerQuery.error instanceof ApiRequestError && playerQuery.error.status === 404
+  const tournament = tournamentQuery.data ?? null
+  const snapshots = snapshotsQuery.data ?? EMPTY_SNAPSHOTS
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null)
   const [runes, setRunes] = useState<RuneEntry[] | null>(cachedRunes)
   const [activeTab, setActiveTab] = useState<ProfileTab>("resumen")
@@ -186,54 +176,15 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
   }
 
   useEffect(() => {
-    setLoading(true)
-    setNotFound(false)
-    setData(null)
     setExpandedMatch(null)
-    fetch(
-      `/api/player?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`,
-    )
-      .then((r) => {
-        if (r.status === 404) {
-          setNotFound(true)
-          setLoading(false)
-          return null
-        }
-        return r.json() as Promise<PlayerProfileData>
-      })
-      .then((d) => {
-        if (d) {
-          setData(d)
-          setLoading(false)
-        }
-      })
-      .catch(() => setLoading(false))
   }, [gameName, tagLine])
-
-  useEffect(() => {
-    fetch("/api/tournament-stats")
-      .then((r) => (r.ok ? (r.json() as Promise<TournamentStats>) : null))
-      .then((d) => {
-        if (d) setTournament(d)
-      })
-      .catch(() => {})
-
-    fetch("/api/snapshots")
-      .then((r) => (r.ok ? (r.json() as Promise<PlayerSnapshots[]>) : null))
-      .then((d) => {
-        if (d) setSnapshots(d)
-      })
-      .catch(() => {})
-  }, [])
 
   useEffect(() => {
     if (cachedRunes) {
       setRunes(cachedRunes)
       return
     }
-    fetch(
-      `https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/data/en_US/runesReforged.json`,
-    )
+    fetch(getDataDragonDataUrl("runesReforged.json"))
       .then((r) => (r.ok ? (r.json() as Promise<RuneEntry[]>) : null))
       .then((d) => {
         if (d) {
@@ -248,11 +199,11 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
     if (!perkId || !runes) return null
     for (const style of runes) {
       if (style.id === perkId)
-        return `https://ddragon.leagueoflegends.com/cdn/img/${style.icon}`
+        return getRuneImageUrl(style.icon)
       for (const slot of style.slots) {
         const rune = slot.runes.find((r) => r.id === perkId)
         if (rune)
-          return `https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}`
+          return getRuneImageUrl(rune.icon)
       }
     }
     return null
@@ -364,7 +315,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
 
   const mainAvatarUrl =
     data?.topChamps?.[0]?.name
-      ? `https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${data.topChamps[0].name}.png`
+      ? getChampionImageUrl(data.topChamps[0].name)
       : emblemUrl
 
   return (
@@ -384,8 +335,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
           <section className="sg-prof-banner">
             <div className="sg-prof-banner-main">
               <div className="sg-prof-avatar-ring">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <FallbackImage
                   src={mainAvatarUrl}
                   alt={data.alias ?? gameName}
                   className="sg-prof-avatar"
@@ -480,8 +430,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
               <div className="sg-card sg-prof-rank-card">
                 <div className="sg-prof-card-title">Rango actual</div>
                 <div className="sg-prof-rank-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <FallbackImage
                     src={emblemUrl}
                     alt={soloQ?.tier ?? "Unranked"}
                     className="sg-prof-crest-lg"
@@ -617,9 +566,8 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                       const champWr = winrate(champ.wins, champ.games)
                       return (
                         <div key={champ.name} className="sg-prof-champ-tile">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${champ.name}.png`}
+                          <FallbackImage
+                            src={getChampionImageUrl(champ.name)}
                             alt={champ.name}
                             className="sg-prof-champ-img"
                           />
@@ -756,9 +704,8 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                         }
                       >
                         <div className="match-card-row">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${m.championName}.png`}
+                          <FallbackImage
+                            src={getChampionImageUrl(m.championName)}
                             alt={m.championName}
                             className="match-champ-icon"
                           />
@@ -795,8 +742,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                               </div>
 
                               {runeIcon && (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
+                                <FallbackImage
                                   src={runeIcon}
                                   alt="keystone"
                                   className="rune-icon"
@@ -855,10 +801,9 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                             <div className="items-row">
                               {itemIds.map((id, idx) =>
                                 id > 0 ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
+                                  <FallbackImage
                                     key={idx}
-                                    src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/item/${id}.png`}
+                                    src={getItemImageUrl(id)}
                                     alt={`item ${id}`}
                                     className="item-icon"
                                   />
@@ -882,9 +827,8 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                                     key={p.puuid}
                                     className={`team-player ${p.championName === m.championName ? "is-me" : ""}`}
                                   >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${p.championName}.png`}
+                                    <FallbackImage
+                                      src={getChampionImageUrl(p.championName)}
                                       alt={p.championName}
                                       className="team-champ-icon"
                                     />
@@ -901,9 +845,8 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                                     key={p.puuid}
                                     className={`team-player ${p.championName === m.championName ? "is-me" : ""}`}
                                   >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${p.championName}.png`}
+                                    <FallbackImage
+                                      src={getChampionImageUrl(p.championName)}
                                       alt={p.championName}
                                       className="team-champ-icon"
                                     />

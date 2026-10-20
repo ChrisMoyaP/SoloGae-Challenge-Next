@@ -2,20 +2,20 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ParticipantsController } from "@/controllers/ParticipantsController"
 import Countdown from "@/components/Countdown"
 import { EVENT_END, EVENT_START } from "@/constants/events"
-import type { ParticipantRow } from "@/types/ParticipantsRow"
-import type { PredictionEntry } from "@/types/Prediction"
 import { calcWinrate } from "@/utils/CalcWinrate"
 import {
-  DDVERSION,
   buildPlayerUrl,
   formatTierEs,
   getTierEmblemUrl,
 } from "@/utils/playerUrl"
-
-const controller = new ParticipantsController()
+import { getChampionImageUrl } from "@/utils/dataDragon"
+import FallbackImage from "@/components/FallbackImage"
+import {
+  useLeaderboardQuery,
+  usePredictionQuery,
+} from "@/hooks/useSharedQueries"
 
 interface RecentTournamentMatch {
   matchId: string
@@ -43,9 +43,11 @@ function formatRelativeTime(ts: number): string {
 }
 
 export default function HomePage() {
-  const [rows, setRows] = useState<ParticipantRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [predictions, setPredictions] = useState<PredictionEntry[]>([])
+  const leaderboard = useLeaderboardQuery()
+  const predictionQuery = usePredictionQuery()
+  const rows = leaderboard.data ?? []
+  const predictions = predictionQuery.data ?? []
+  const loading = leaderboard.isLoading
   const [recentMatches, setRecentMatches] = useState<RecentTournamentMatch[]>(
     [],
   )
@@ -56,17 +58,6 @@ export default function HomePage() {
   const formatCLP = (n: number) => n.toLocaleString("es-CL")
 
   useEffect(() => {
-    controller
-      .getAllOrdered()
-      .then((data) => setRows(data))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-
-    fetch("/api/prediction")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((d: PredictionEntry[]) => setPredictions(d))
-      .catch(() => {})
-
     fetch("/api/stats/recent-matches")
       .then((r) => (r.ok ? r.json() : { matches: [] }))
       .then((d: { matches?: RecentTournamentMatch[] }) =>
@@ -89,7 +80,8 @@ export default function HomePage() {
             GRANDES JUGADORES HACEN <span className="accent">HISTORIA</span>
           </h1>
           <p className="sg-hero-desc">
-            Compite en desafíos, asciende en el ranking de SoloQ. Escala y supera a Diego en cantidad de juegos.
+            Compite en desafíos, asciende en el ranking de SoloQ. Escala y
+            supera a Diego en cantidad de juegos.
           </p>
           <div className="sg-hero-actions">
             <Link href="/ranking" className="sg-btn sg-btn-primary">
@@ -103,8 +95,7 @@ export default function HomePage() {
 
         <div className="sg-hero-visual">
           <div className="sg-hero-art-card">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FallbackImage
               src="/GaePicaro.png"
               alt="SoloGae Challenge"
               className="sg-hero-art-logo"
@@ -239,8 +230,7 @@ export default function HomePage() {
                     className="sg-featured-card"
                   >
                     <div className="sg-featured-avatar-wrap">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <FallbackImage
                         src={getTierEmblemUrl(solo?.tier)}
                         alt={solo?.tier ?? "Tier"}
                         className="sg-featured-avatar"
@@ -332,8 +322,7 @@ export default function HomePage() {
                             )}
                             className="sg-player-cell"
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <FallbackImage
                               src={getTierEmblemUrl(solo?.tier)}
                               alt={solo?.tier ?? "Tier"}
                               className="sg-player-mini-avatar"
@@ -407,9 +396,8 @@ export default function HomePage() {
                   className="sg-recent-item"
                 >
                   <div className="sg-recent-who">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${m.championName}.png`}
+                    <FallbackImage
+                      src={getChampionImageUrl(m.championName)}
                       alt={m.championName}
                       className="sg-recent-champ"
                     />

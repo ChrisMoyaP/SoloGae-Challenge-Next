@@ -1,14 +1,11 @@
 "use client"
 
-import { Suspense, useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import dynamic from "next/dynamic"
-import { useSearchParams } from "next/navigation"
-import { ParticipantsController } from "@/controllers/ParticipantsController"
 import ParticipantsTable from "@/components/ParticipantsTable"
 import PredictionPanel from "@/components/PredictionPanel"
-import type { ParticipantRow } from "@/types/ParticipantsRow"
-import type { PlayerSnapshots } from "@/types/Snapshot"
-import type { PredictionEntry } from "@/types/Prediction"
+import { isRateLimited } from "@/lib/clientApi"
+import { useLeaderboardQuery, usePredictionQuery, useSnapshotsQuery } from "@/hooks/useSharedQueries"
 
 const RankChart = dynamic(() => import("@/components/RankChart"), {
   ssr: false,
@@ -19,7 +16,9 @@ const RankChart = dynamic(() => import("@/components/RankChart"), {
   ),
 })
 
-const controller = new ParticipantsController()
+const EMPTY_ROWS: never[] = []
+const EMPTY_SNAPSHOTS: never[] = []
+const EMPTY_PREDICTIONS: never[] = []
 
 function WinrateDonut({ pct }: { pct: number }) {
   const radius = 22
@@ -54,35 +53,13 @@ function WinrateDonut({ pct }: { pct: number }) {
 }
 
 function RankingContent() {
-  const searchParams = useSearchParams()
-  const initialQuery = searchParams?.get("q") ?? ""
-
-  const [rows, setRows] = useState<ParticipantRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [snapshots, setSnapshots] = useState<PlayerSnapshots[]>([])
-  const [predictions, setPredictions] = useState<PredictionEntry[]>([])
-
-  async function load(force = false) {
-    setLoading(true)
-    try {
-      const data = await controller.getAllOrdered(force)
-      setRows(data)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    void load(false)
-    fetch("/api/snapshots")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: PlayerSnapshots[]) => setSnapshots(data))
-      .catch(() => {})
-    fetch("/api/prediction")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: PredictionEntry[]) => setPredictions(data))
-      .catch(() => {})
-  }, [])
+  const leaderboard = useLeaderboardQuery()
+  const snapshotsQuery = useSnapshotsQuery()
+  const predictionQuery = usePredictionQuery()
+  const rows = leaderboard.data ?? EMPTY_ROWS
+  const snapshots = snapshotsQuery.data ?? EMPTY_SNAPSHOTS
+  const predictions = predictionQuery.data ?? EMPTY_PREDICTIONS
+  const loading = leaderboard.isLoading
 
   const kpis = useMemo(() => {
     const activeCount = rows.filter((p) => p.base.twitch !== "RETIRADO").length
@@ -175,14 +152,22 @@ function RankingContent() {
         <ParticipantsTable
           rows={rows}
           loading={loading}
-          onReload={() => load(true)}
-          initialSearch={initialQuery}
+          onReload={() => void leaderboard.refetch()}
         />
       </section>
 
       {/* ── Gráfico de Progreso y Predicción ── */}
       <section className="bottom-panels">
-        <RankChart players={snapshots} />
+        <div>
+          <RankChart players={snapshots} />
+          {snapshotsQuery.isError && (
+            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", textAlign: "center" }}>
+              {isRateLimited(snapshotsQuery.error)
+                ? "Mostrando el último historial disponible; se actualizará cuando termine el límite de solicitudes."
+                : "El historial de rango no está disponible temporalmente."}
+            </p>
+          )}
+        </div>
         <PredictionPanel entries={predictions} />
       </section>
     </main>
@@ -190,15 +175,5 @@ function RankingContent() {
 }
 
 export default function RankingPage() {
-  return (
-    <Suspense
-      fallback={
-        <main className="sg-container sg-ranking-page">
-          <div className="loading">Cargando clasificación global...</div>
-        </main>
-      }
-    >
-      <RankingContent />
-    </Suspense>
-  )
+  return <RankingContent />
 }

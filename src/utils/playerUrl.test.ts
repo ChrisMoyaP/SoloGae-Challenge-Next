@@ -22,7 +22,7 @@ describe("playerUrl utilities", () => {
   })
 
   it("devuelve emblema oficial de CommunityDragon", () => {
-    expect(getTierEmblemUrl("EMERALD")).toContain("emerald.png")
-    expect(getTierEmblemUrl(null)).toContain("iron.png")
+    expect(getTierEmblemUrl("EMERALD")).toContain("emerald.svg")
+    expect(getTierEmblemUrl(null)).toContain("iron.svg")
   })
 })

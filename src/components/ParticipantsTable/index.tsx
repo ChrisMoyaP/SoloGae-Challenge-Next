@@ -10,26 +10,16 @@ import { buildPlayerUrl, formatTierEs, getTierEmblemUrl } from "../../utils/play
 import { useFavoritePlayers } from "../../hooks/useFavoritePlayers"
 import RowDetail from "./RowDetail"
 import "./styles.css"
-import { Fragment, useEffect, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo } from "react"
+import FallbackImage from "@/components/FallbackImage"
+import { useRankingUiStore, type SortKey } from "@/stores/useRankingUiStore"
 
 interface Props {
   rows: ParticipantRow[]
   loading?: boolean
   onReload?: () => void
   onSelectPlayer?: (gameName: string, tagLine: string) => void
-  initialSearch?: string
 }
-
-type SortDirection = "asc" | "desc" | null
-type SortKey =
-  | "alias"
-  | "tier"
-  | "lp"
-  | "wins"
-  | "losses"
-  | "winrate"
-  | "games"
-  | "lpToday"
 
 const TIER_FILTERS = [
   { value: "", label: "Todos los rangos" },
@@ -54,36 +44,27 @@ const ParticipantsTable = ({
   loading,
   onReload,
   onSelectPlayer,
-  initialSearch = "",
 }: Props) => {
-  const [sortKey, setSortKey] = useState<SortKey | null>(null)
-  const [sortDir, setSortDir] = useState<SortDirection>(null)
-
-  const [search, setSearch] = useState(initialSearch)
-  const [tierFilter, setTierFilter] = useState<string>("")
-  const [regionFilter, setRegionFilter] = useState<string>("ALL")
-  const [roleFilter, setRoleFilter] = useState<string>("")
-  const [onlyFavorites, setOnlyFavorites] = useState(false)
-  const [onlyInGame, setOnlyInGame] = useState(false)
-  const [expandedKey, setExpandedKey] = useState<string | null>(null)
+  const {
+    sortKey, sortDir, search, tierFilter, regionFilter, roleFilter, onlyFavorites, onlyInGame, expandedKey,
+    setSort, setSearch, setTierFilter, setRegionFilter, setRoleFilter, setOnlyFavorites, setOnlyInGame, setExpandedKey,
+  } = useRankingUiStore()
   const { favorites, toggleFavorite } = useFavoritePlayers()
-
-  useEffect(() => {
-    if (initialSearch) setSearch(initialSearch)
-  }, [initialSearch])
 
   useEffect(() => {
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
+    const q = params.get("q")
     const t = params.get("tier")
     const r = params.get("role")
     const fav = params.get("fav")
     const live = params.get("live")
+    if (q) setSearch(q)
     if (t) setTierFilter(t)
     if (r) setRoleFilter(r)
     if (fav === "1") setOnlyFavorites(true)
     if (live === "1") setOnlyInGame(true)
-  }, [])
+  }, [setOnlyFavorites, setOnlyInGame, setRoleFilter, setSearch, setTierFilter])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -105,23 +86,6 @@ const ParticipantsTable = ({
       window.history.replaceState(null, "", nextUrl)
     }
   }, [search, tierFilter, roleFilter, onlyFavorites, onlyInGame])
-
-  const onSort = (key: SortKey) => {
-    if (sortKey !== key) {
-      setSortKey(key)
-      setSortDir("desc")
-      return
-    }
-
-    if (sortDir === "desc") {
-      setSortDir("asc")
-    } else if (sortDir === "asc") {
-      setSortKey(null)
-      setSortDir(null)
-    } else {
-      setSortDir("desc")
-    }
-  }
 
   const renderArrow = (key: SortKey) => {
     if (sortKey !== key) return ""
@@ -289,7 +253,7 @@ const ParticipantsTable = ({
         <button
           type="button"
           className={`toolbar-btn${onlyFavorites ? " active" : ""}`}
-          onClick={() => setOnlyFavorites((v) => !v)}
+          onClick={() => setOnlyFavorites(!onlyFavorites)}
         >
           ★ Favoritos {favorites.size > 0 ? `(${favorites.size})` : ""}
         </button>
@@ -297,7 +261,7 @@ const ParticipantsTable = ({
         <button
           type="button"
           className={`toolbar-btn${onlyInGame ? " active" : ""}`}
-          onClick={() => setOnlyInGame((v) => !v)}
+          onClick={() => setOnlyInGame(!onlyInGame)}
         >
           🎮 En partida
         </button>
@@ -322,26 +286,26 @@ const ParticipantsTable = ({
             <tr>
               <th style={{ width: 36 }}></th>
               <th style={{ width: 52 }}>#</th>
-              <th onClick={() => onSort("alias")} style={{ cursor: "pointer" }}>
+              <th onClick={() => setSort("alias")} style={{ cursor: "pointer" }}>
                 Jugador{renderArrow("alias")}
               </th>
               <th>Rol</th>
-              <th onClick={() => onSort("tier")} style={{ cursor: "pointer" }}>
+              <th onClick={() => setSort("tier")} style={{ cursor: "pointer" }}>
                 Rango{renderArrow("tier")}
               </th>
-              <th onClick={() => onSort("lp")} style={{ cursor: "pointer" }}>
+              <th onClick={() => setSort("lp")} style={{ cursor: "pointer" }}>
                 LP{renderArrow("lp")}
               </th>
-              <th onClick={() => onSort("wins")} style={{ cursor: "pointer" }}>
+              <th onClick={() => setSort("wins")} style={{ cursor: "pointer" }}>
                 Victorias{renderArrow("wins")}
               </th>
-              <th onClick={() => onSort("losses")} style={{ cursor: "pointer" }}>
+              <th onClick={() => setSort("losses")} style={{ cursor: "pointer" }}>
                 Derrotas{renderArrow("losses")}
               </th>
-              <th onClick={() => onSort("winrate")} style={{ cursor: "pointer" }}>
+              <th onClick={() => setSort("winrate")} style={{ cursor: "pointer" }}>
                 WR{renderArrow("winrate")}
               </th>
-              <th onClick={() => onSort("lpToday")} style={{ cursor: "pointer" }}>
+              <th onClick={() => setSort("lpToday")} style={{ cursor: "pointer" }}>
                 Tendencia{renderArrow("lpToday")}
               </th>
               <th>Racha</th>
@@ -423,8 +387,7 @@ const ParticipantsTable = ({
 
                       <td data-label="Jugador">
                         <div className="player-identity-cell">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <FallbackImage
                             src={getTierEmblemUrl(solo?.tier)}
                             alt={solo?.tier ?? "Unranked"}
                             className="player-row-avatar"
@@ -469,8 +432,7 @@ const ParticipantsTable = ({
                           <span
                             className={`tier-tag tier-${solo.tier.toLowerCase()}`}
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <FallbackImage
                               src={getTierEmblemUrl(solo.tier)}
                               alt={solo.tier}
                               className="tier-mini-crest"

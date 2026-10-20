@@ -2,12 +2,14 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import type { LiveGame, LiveGamesResponse } from "@/types/LiveGame"
-import { usePageVisibilityPoll } from "@/hooks/usePageVisibilityPoll"
-import { DDVERSION } from "@/utils/playerUrl"
+import type { LiveGame } from "@/types/LiveGame"
+import { getChampionImageUrl } from "@/utils/dataDragon"
+import FallbackImage from "@/components/FallbackImage"
+import { useLiveGamesQuery } from "@/hooks/useSharedQueries"
+import { isRateLimited } from "@/lib/clientApi"
 import "./styles.css"
 
-const POLL_MS = 30_000
+const EMPTY_GAMES: LiveGame[] = []
 
 function formatElapsed(seconds: number): string {
   if (seconds < 0) return "0:00"
@@ -16,9 +18,15 @@ function formatElapsed(seconds: number): string {
   return `${m}:${s}`
 }
 
-function GameCard({ game, extraSeconds }: { game: LiveGame; extraSeconds: number }) {
+function GameCard({
+  game,
+  extraSeconds,
+}: {
+  game: LiveGame
+  extraSeconds: number
+}) {
   const blueTeam = game.players.filter((p) => p.teamId === 100)
-  const redTeam  = game.players.filter((p) => p.teamId === 200)
+  const redTeam = game.players.filter((p) => p.teamId === 200)
   const elapsed = Math.max(0, game.gameLengthSeconds + extraSeconds)
 
   return (
@@ -36,80 +44,113 @@ function GameCard({ game, extraSeconds }: { game: LiveGame; extraSeconds: number
           ))}
         </div>
         <span className="live-game-queue">{game.queueName}</span>
-        <span className="live-game-clock">● EN PARTIDA · {formatElapsed(elapsed)}</span>
+        <span className="live-game-clock">
+          ● EN PARTIDA · {formatElapsed(elapsed)}
+        </span>
       </div>
 
       <div className="live-game-teams">
-        {[{ label: "Equipo Azul", team: blueTeam, cls: "blue" }, { label: "Equipo Rojo", team: redTeam, cls: "red" }].map(
-          ({ label, team, cls }) => (
-            <div key={cls} className="live-game-team">
-              <div className={`live-game-team-title ${cls}`}>{label}</div>
-              {team.map((p) => (
-                <div key={p.puuid} className={`live-game-player${p.isTracked ? " tracked" : ""}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/img/champion/${p.championName}.png`}
-                    alt={p.championName}
-                    loading="lazy"
-                    decoding="async"
-                    className="live-game-champ-icon"
-                  />
-                  <div className="live-game-player-info">
-                    <span className="live-game-player-name">
-                      {p.trackedAlias ?? p.riotId ?? "Invocador"}
-                    </span>
-                    <span className="live-game-player-champ">{p.championName}</span>
-                  </div>
+        {[
+          { label: "Equipo Azul", team: blueTeam, cls: "blue" },
+          { label: "Equipo Rojo", team: redTeam, cls: "red" },
+        ].map(({ label, team, cls }) => (
+          <div key={cls} className="live-game-team">
+            <div className={`live-game-team-title ${cls}`}>{label}</div>
+            {team.map((p) => (
+              <div
+                key={p.puuid}
+                className={`live-game-player${p.isTracked ? " tracked" : ""}`}
+              >
+                <FallbackImage
+                  src={getChampionImageUrl(p.championName)}
+                  alt={p.championName}
+                  loading="lazy"
+                  decoding="async"
+                  className="live-game-champ-icon"
+                />
+                <div className="live-game-player-info">
+                  <span className="live-game-player-name">
+                    {p.trackedAlias ?? p.riotId ?? "Invocador"}
+                  </span>
+                  <span className="live-game-player-champ">
+                    {p.championName}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )
-        )}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
 export default function LiveGamesPage() {
-  const [games, setGames] = useState<LiveGame[]>([])
-  const [loading, setLoading] = useState(true)
+  const liveGames = useLiveGamesQuery()
+  const games = liveGames.data?.games ?? EMPTY_GAMES
+  const loading = liveGames.isLoading
   const [fetchedAt, setFetchedAt] = useState<number>(() => Date.now())
   const [now, setNow] = useState<number>(() => Date.now())
 
-  function load(signal?: AbortSignal) {
-    fetch("/api/riot/live-games", { signal })
-      .then((r) => (r.ok ? (r.json() as Promise<LiveGamesResponse>) : null))
-      .then((d) => {
-        if (d) {
-          setGames(d.games)
-          const ts = Date.now()
-          setFetchedAt(ts)
-          setNow(ts)
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }
-
-  usePageVisibilityPoll(load, POLL_MS)
+  useEffect(() => {
+    if (!liveGames.data) return
+    const ts = Date.now()
+    setFetchedAt(ts)
+    setNow(ts)
+  }, [liveGames.data, liveGames.dataUpdatedAt])
 
   useEffect(() => {
     if (games.length === 0) return
     const id = setInterval(() => {
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") return
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden"
+      )
+        return
       setNow(Date.now())
     }, 1000)
     return () => clearInterval(id)
   }, [games.length])
 
   if (loading) {
-    return <div className="live-games-loading">Consultando partidas en vivo...</div>
+    return (
+      <div className="live-games-loading">Consultando partidas en vivo...</div>
+    )
+  }
+
+  if (liveGames.isError && games.length === 0) {
+    const retryAt =
+      isRateLimited(liveGames.error) && liveGames.error.retryAfterAt
+        ? new Intl.DateTimeFormat("es-CL", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(liveGames.error.retryAfterAt)
+        : null
+
+    return (
+      <div className="live-games-page">
+        <p className="live-games-empty">
+          {retryAt
+            ? `Las partidas en vivo estarán disponibles nuevamente a las ${retryAt}.`
+            : "No se pudieron consultar las partidas en vivo temporalmente."}
+        </p>
+        <button
+          type="button"
+          className="toolbar-btn"
+          onClick={() => void liveGames.refetch()}
+        >
+          Reintentar
+        </button>
+      </div>
+    )
   }
 
   if (games.length === 0) {
     return (
       <div className="live-games-page">
-        <p className="live-games-empty">No hay partidas en vivo en este momento.</p>
+        <p className="live-games-empty">
+          No hay partidas en vivo en este momento.
+        </p>
       </div>
     )
   }

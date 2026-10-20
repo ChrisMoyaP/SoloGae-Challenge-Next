@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Inter, Rajdhani } from "next/font/google"
 import Navbar from "@/components/Navbar"
+import AppQueryProvider from "@/components/AppQueryProvider"
 import "./globals.css"
 
 const inter = Inter({
@@ -33,8 +34,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        <Navbar />
-        <div className="sg-app-shell">{children}</div>
+        <AppQueryProvider>
+          <Navbar />
+          <div className="sg-app-shell">{children}</div>
+        </AppQueryProvider>
       </body>
     </html>
   )

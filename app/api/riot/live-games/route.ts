@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import type { LiveGame, LiveGamePlayer } from "@/types/LiveGame"
 import { mapWithConcurrency, withServerCache } from "@/lib/serverCache"
-import { DDVERSION } from "@/utils/playerUrl"
+import { getDataDragonDataUrl } from "@/utils/dataDragon"
 
 const LA2 = "https://la2.api.riotgames.com"
 
@@ -21,7 +21,7 @@ const QUEUE_NAMES: Record<number, string> = {
 async function getChampionMap(): Promise<Record<number, string>> {
   return withServerCache("ddragon:champions", 86_400, async () => {
     try {
-      const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${DDVERSION}/data/en_US/champion.json`)
+      const res = await fetch(getDataDragonDataUrl("champion.json"))
       if (!res.ok) return {}
       const data = await res.json() as { data: Record<string, { key: string; id: string }> }
       const map: Record<number, string> = {}

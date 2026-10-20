@@ -12,11 +12,6 @@ interface BaseParticipant {
   twitch: string
 }
 
-let cachedRows: ParticipantRow[] | null = null
-let cachedAt = 0
-let inFlightLoad: Promise<ParticipantRow[]> | null = null
-const CLIENT_CACHE_TTL_MS = 60_000
-
 export class ParticipantsController {
   private participantService: ParticipantsService
   private twitchService: TwitchService
@@ -31,38 +26,10 @@ export class ParticipantsController {
     this.twitchService = twitchService ?? new TwitchService()
   }
 
-  async getAllOrdered(forceReload = false): Promise<ParticipantRow[]> {
-    const isTest = typeof process !== "undefined" && Boolean(process.env?.VITEST)
-
-    if (!isTest && !forceReload && cachedRows && Date.now() - cachedAt < CLIENT_CACHE_TTL_MS) {
-      return cachedRows
-    }
-
-    if (!isTest && !forceReload && inFlightLoad) {
-      return inFlightLoad
-    }
-
-    const loadPromise =
-      !isTest && !this.hasCustomServices
-        ? this.fetchFromLeaderboardEndpoint()
-        : this.fetchAllOrdered()
-
-    if (!isTest) {
-      inFlightLoad = loadPromise
-    }
-
-    try {
-      const result = await loadPromise
-      if (!isTest) {
-        cachedRows = result
-        cachedAt = Date.now()
-      }
-      return result
-    } finally {
-      if (!isTest) {
-        inFlightLoad = null
-      }
-    }
+  async getAllOrdered(): Promise<ParticipantRow[]> {
+    return this.hasCustomServices
+      ? this.fetchAllOrdered()
+      : this.fetchFromLeaderboardEndpoint()
   }
 
   private async fetchFromLeaderboardEndpoint(): Promise<ParticipantRow[]> {
