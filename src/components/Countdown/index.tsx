@@ -6,6 +6,7 @@ import "./styles.css"
 interface Props {
   start: Date
   end: Date
+  compact?: boolean
 }
 
 type TimeLeft = {
@@ -16,7 +17,9 @@ type TimeLeft = {
   finished: boolean
 }
 
-const Countdown = ({ start, end }: Props) => {
+const pad = (n: number) => String(n).padStart(2, "0")
+
+const Countdown = ({ start, end, compact = false }: Props) => {
   const [state, setState] = useState<TimeLeft>({
     days: 0,
     hours: 0,
@@ -46,35 +49,35 @@ const Countdown = ({ start, end }: Props) => {
     calculate()
     const id = setInterval(calculate, 1000)
     return () => clearInterval(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const now = new Date()
   const label = state.finished
-    ? "El torneo ha finalizado"
+    ? "TORNEO FINALIZADO"
     : now < start
-    ? "El Torneo comienza en:"
-    : "El Torneo termina en:"
+    ? "COMIENZA EN"
+    : "TERMINA EN"
 
   return (
-    <div className="countdown-card">
-      <h2>{label}</h2>
+    <div className={`countdown-card${compact ? " compact" : ""}`}>
+      <div className="countdown-label">{label}</div>
       <div className="countdown-grid">
         <div className="count-box">
-          <p className="n">{state.days}</p>
-          <p className="l">Días</p>
+          <p className="n">{pad(state.days)}</p>
+          <p className="l">días</p>
         </div>
         <div className="count-box">
-          <p className="n">{state.hours}</p>
-          <p className="l">Hora</p>
+          <p className="n">{pad(state.hours)}</p>
+          <p className="l">horas</p>
         </div>
         <div className="count-box">
-          <p className="n">{state.minutes}</p>
-          <p className="l">Minutos</p>
+          <p className="n">{pad(state.minutes)}</p>
+          <p className="l">min</p>
         </div>
         <div className="count-box">
-          <p className="n">{state.seconds}</p>
-          <p className="l">Segundos</p>
+          <p className="n">{pad(state.seconds)}</p>
+          <p className="l">seg</p>
         </div>
       </div>
     </div>

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { usePageVisibilityPoll } from "@/hooks/usePageVisibilityPoll"
+import FallbackImage from "@/components/FallbackImage"
 import "./styles.css"
 
 interface LiveStreamer {
@@ -16,13 +18,13 @@ interface Props {
 
 export default function RightPanel({ onStreamersChange }: Props) {
   const [streamers, setStreamers] = useState<LiveStreamer[]>([])
-  const [watching,  setWatching]  = useState<string | null>(null)
+  const [watching, setWatching] = useState<string | null>(null)
   const fetching = useRef(false)
 
-  function fetchLive() {
+  function fetchLive(signal?: AbortSignal) {
     if (fetching.current) return
     fetching.current = true
-    fetch("/api/twitch/live")
+    fetch("/api/twitch/live", { signal })
       .then((r) => r.json())
       .then((d) => {
         const list: LiveStreamer[] = d.streamers ?? []
@@ -30,31 +32,37 @@ export default function RightPanel({ onStreamersChange }: Props) {
         onStreamersChange?.(list.length)
       })
       .catch(() => {})
-      .finally(() => { fetching.current = false })
+      .finally(() => {
+        fetching.current = false
+      })
   }
 
+  usePageVisibilityPoll(fetchLive, 5 * 60 * 1000)
+
   useEffect(() => {
-    fetchLive()
-    const interval = setInterval(fetchLive, 5 * 60 * 1000)
-    return () => clearInterval(interval)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (!watching) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setWatching(null)
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [watching])
 
   const hostname =
     typeof window !== "undefined" ? window.location.hostname : "localhost"
 
-  const visible = streamers.slice(0, 5)
+  const visible = streamers.slice(0, 8)
 
-  // ── Vista: nadie en vivo ──
   if (visible.length === 0) {
     return (
       <div className="right-panel">
-        <span className="streams-empty">Sin streams activos</span>
+        <span className="streams-empty">
+          No hay jugadores transmitiendo en Twitch en este momento.
+        </span>
       </div>
     )
   }
 
-  // ── Vista: hay streamers en vivo — lista vertical ──
   return (
     <>
       <div className="right-panel">
@@ -62,18 +70,18 @@ export default function RightPanel({ onStreamersChange }: Props) {
           {visible.map((s) => (
             <button
               key={s.username}
+              type="button"
               className="stream-card"
               onClick={() => setWatching(s.username)}
               aria-label={`Ver stream de ${s.alias}`}
             >
               <div className="stream-thumb-wrapper">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <FallbackImage
                   src={s.thumbnailUrl}
                   alt={s.alias}
                   className="stream-thumb"
                 />
-                <span className="stream-live-badge">EN VIVO</span>
+                <span className="stream-live-badge">● EN VIVO</span>
               </div>
               <div className="stream-name">{s.alias}</div>
             </button>
@@ -81,34 +89,34 @@ export default function RightPanel({ onStreamersChange }: Props) {
         </div>
       </div>
 
-      {/* ── Modal de stream ── */}
-      {watching && createPortal(
-        <div
-          className="stream-modal-backdrop"
-          onClick={() => setWatching(null)}
-        >
+      {watching &&
+        createPortal(
           <div
-            className="stream-modal"
-            onClick={(e) => e.stopPropagation()}
+            className="stream-modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setWatching(null)}
           >
-            <button
-              className="stream-modal-close"
-              onClick={() => setWatching(null)}
-              aria-label="Cerrar stream"
-            >
-              ✕
-            </button>
-            <iframe
-              src={`https://player.twitch.tv/?channel=${watching}&parent=${hostname}`}
-              allow="autoplay; fullscreen"
-              allowFullScreen
-              className="stream-modal-iframe"
-              title={`Stream de ${watching}`}
-            />
-          </div>
-        </div>,
-        document.body
-      )}
+            <div className="stream-modal" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="stream-modal-close"
+                onClick={() => setWatching(null)}
+                aria-label="Cerrar stream"
+              >
+                ✕
+              </button>
+              <iframe
+                src={`https://player.twitch.tv/?channel=${watching}&parent=${hostname}`}
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                className="stream-modal-iframe"
+                title={`Stream de ${watching}`}
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   )
 }

@@ -18,9 +18,9 @@ interface Props {
 }
 
 const COLORS = [
-  "#4da6ff", "#ff6b6b", "#51cf66", "#ffd43b", "#f06595",
-  "#74c0fc", "#ff8c42", "#a9e34b", "#cc5de8", "#20c997",
-  "#ff922b", "#339af0", "#f76707",
+  "#00E5C2", "#7C3AED", "#FF6B6B", "#38BDF8", "#F0B429",
+  "#A78BFA", "#34D399", "#FB923C", "#F472B6", "#60A5FA",
+  "#FBBF24", "#2DD4BF", "#E879F9",
 ]
 
 function formatDate(iso: string): string {
@@ -30,16 +30,15 @@ function formatDate(iso: string): string {
 
 function formatYTick(v: number): string {
   if (v >= 2900) return "Master+"
-  if (v >= 2500) return "Diamond"
-  if (v >= 2100) return "Emerald"
-  if (v >= 1700) return "Platinum"
-  if (v >= 1300) return "Gold"
-  if (v >= 900)  return "Silver"
-  if (v >= 500)  return "Bronze"
-  return "Iron"
+  if (v >= 2500) return "Diamante"
+  if (v >= 2100) return "Esmeralda"
+  if (v >= 1700) return "Platino"
+  if (v >= 1300) return "Oro"
+  if (v >= 900)  return "Plata"
+  if (v >= 500)  return "Bronce"
+  return "Hierro"
 }
 
-// Tipo del punto de datos del gráfico
 type ChartPoint = Record<string, unknown> & { date: string }
 
 interface PayloadEntry {
@@ -54,7 +53,6 @@ interface CustomTooltipProps {
   label?: string
 }
 
-// Tooltip personalizado
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
 
@@ -63,12 +61,12 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       style={{
         background: "var(--bg3)",
         border: "1px solid var(--border)",
-        borderRadius: 8,
+        borderRadius: 10,
         padding: "0.65rem 0.9rem",
-        fontSize: 13,
+        fontSize: 12,
       }}
     >
-      <p style={{ color: "#9aa0a6", margin: "0 0 0.4rem" }}>
+      <p style={{ color: "var(--text-muted)", margin: "0 0 0.4rem" }}>
         {label ? formatDate(label) : ""}
       </p>
       {payload.map((entry) => {
@@ -80,7 +78,9 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
           >
             <span style={{ fontWeight: 600 }}>{entry.name}</span>
             {meta && (
-              <span style={{ color: "#ccc", marginLeft: "0.5rem" }}>{meta}</span>
+              <span style={{ color: "var(--ivory)", marginLeft: "0.5rem" }}>
+                {meta}
+              </span>
             )}
           </div>
         )
@@ -103,24 +103,24 @@ export default function RankChart({ players }: Props) {
 
   if (!players.length) {
     return (
-      <p style={{ color: "#555", textAlign: "center", fontSize: 14 }}>
-        No hay snapshots de rank todavía.
-      </p>
+      <div className="sg-card">
+        <p style={{ color: "var(--text-muted)", textAlign: "center", fontSize: 14 }}>
+          No hay snapshots de rank todavía.
+        </p>
+      </div>
     )
   }
 
-  // Todas las fechas únicas ordenadas
   const dates = [
     ...new Set(players.flatMap((p) => p.snapshots.map((s) => s.date))),
   ].sort()
 
-  // Datos planos para Recharts: una entrada por fecha, una clave por jugador
   const chartData: ChartPoint[] = dates.map((date) => {
     const point: ChartPoint = { date }
     for (const player of players) {
       const snap = player.snapshots.find((s) => s.date === date)
       if (snap) {
-        point[player.alias]          = snap.rankValue
+        point[player.alias]           = snap.rankValue
         point[`${player.alias}_meta`] = `${snap.tier} ${snap.rank} ${snap.lp}LP`
       }
     }
@@ -128,29 +128,15 @@ export default function RankChart({ players }: Props) {
   })
 
   return (
-    <div
-      style={{
-        width: "100%",
-        background: "var(--bg2)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: "1.25rem 1rem 1rem",
-      }}
-    >
-      <h2
-        style={{
-          margin: "0 0 1rem 0.5rem",
-          fontSize: "0.75rem",
-          fontWeight: 600,
-          color: "var(--text-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-        }}
-      >
-        Progreso de Rank
-      </h2>
+    <div className="sg-card">
+      <div className="sg-section-header">
+        <h2 className="sg-section-title" style={{ fontSize: "1rem" }}>
+          Progreso de Rank
+        </h2>
+        <span className="sg-badge sg-badge-teal">Histórico</span>
+      </div>
 
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer width="100%" height={330}>
         <LineChart
           data={chartData}
           margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
@@ -159,26 +145,39 @@ export default function RankChart({ players }: Props) {
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
-            tick={{ fill: "#9aa0a6", fontSize: 11 }}
+            tick={{ fill: "#8B95A5", fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: "#333" }}
+            axisLine={{ stroke: "var(--border)" }}
           />
           <YAxis
             tickFormatter={formatYTick}
-            tick={{ fill: "#9aa0a6", fontSize: 11 }}
+            tick={{ fill: "#8B95A5", fontSize: 11 }}
             tickLine={false}
             axisLine={false}
-            width={68}
+            width={72}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend
-            wrapperStyle={{ color: "#ccc", fontSize: 12, paddingTop: "0.75rem", cursor: "pointer" }}
-            onClick={(e) => { if (typeof e.value === "string") toggleSeries(e.value) }}
+            wrapperStyle={{
+              color: "var(--ivory)",
+              fontSize: 12,
+              paddingTop: "0.75rem",
+              cursor: "pointer",
+            }}
+            onClick={(e) => {
+              if (typeof e.value === "string") toggleSeries(e.value)
+            }}
             formatter={(value) => (
-              <span style={{
-                color: hidden.has(value as string) ? "#555" : "#ccc",
-                textDecoration: hidden.has(value as string) ? "line-through" : "none",
-              }}>
+              <span
+                style={{
+                  color: hidden.has(value as string)
+                    ? "var(--text-muted)"
+                    : "var(--ivory)",
+                  textDecoration: hidden.has(value as string)
+                    ? "line-through"
+                    : "none",
+                }}
+              >
                 {value}
               </span>
             )}

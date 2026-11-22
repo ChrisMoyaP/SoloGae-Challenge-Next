@@ -1,40 +1,42 @@
 .countdown-card {
-  background: #111827;
-  padding: 18px;
-  border-radius: 12px;
-  text-align: center;
-  width: 360px;
-  color: white;
-  margin-top: 15px;
+  width: 100%;
+  color: var(--ivory);
 }
 
-.countdown-card h2 {
-  margin-bottom: 15px;
-  font-size: 1.4rem;
-  font-weight: bold;
+.countdown-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.45rem;
 }
 
 .countdown-grid {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
 }
 
 .count-box {
-  flex: 1;
-  background: #1f2937;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #374151;
+  background: var(--bg3);
+  padding: 0.5rem 0.35rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  text-align: center;
 }
 
 .count-box .n {
-  font-size: 1.6rem;
-  font-weight: bold;
+  font-family: var(--font-display), 'Rajdhani', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
   margin: 0;
 }
 
 .count-box .l {
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0;
 }

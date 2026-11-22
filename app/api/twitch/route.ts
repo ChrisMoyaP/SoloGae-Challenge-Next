@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { enforceRateLimit } from "@/lib/rateLimit"
+import { withServerCache } from "@/lib/serverCache"
 
-// Cache del token en memoria del módulo (reutilizable durante el ciclo de vida del proceso)
 let cachedToken = ""
 let tokenExpiry = 0
 
@@ -24,40 +25,46 @@ async function getTwitchToken(): Promise<string> {
 
   const data = await res.json()
   cachedToken = data.access_token
-  // expires_in viene en segundos; restamos 60s de margen
   tokenExpiry = now + (data.expires_in - 60) * 1000
   return cachedToken
 }
 
 export async function GET(request: NextRequest) {
+  const limited = enforceRateLimit(request, { bucketId: "api:twitch", limit: 60, windowMs: 60_000 })
+  if (limited) return limited
+
   const { searchParams } = new URL(request.url)
   const username = searchParams.get("username") ?? ""
 
-  // Canales sin Twitch o retirados
   if (!username.trim() || username === "RETIRADO") {
     return NextResponse.json({ online: false })
   }
 
   try {
-    const token = await getTwitchToken()
-    const clientId = process.env.TWITCH_CLIENT_ID
+    const online = await withServerCache(`twitch:user:${username.toLowerCase()}`, 60, async () => {
+      const token = await getTwitchToken()
+      const clientId = process.env.TWITCH_CLIENT_ID
 
-    const res = await fetch(
-      `https://api.twitch.tv/helix/streams?user_login=${encodeURIComponent(username)}`,
-      {
-        headers: {
-          "Client-ID": clientId!,
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    )
+      const res = await fetch(
+        `https://api.twitch.tv/helix/streams?user_login=${encodeURIComponent(username)}`,
+        {
+          headers: {
+            "Client-ID": clientId!,
+            Authorization: `Bearer ${token}`,
+          },
+          next: { revalidate: 60 },
+        }
+      )
 
-    if (!res.ok) return NextResponse.json({ online: false })
+      if (!res.ok) return false
 
-    const data = await res.json()
-    const online = Array.isArray(data.data) && data.data.length > 0
+      const data = await res.json()
+      return Array.isArray(data.data) && data.data.length > 0
+    })
 
-    return NextResponse.json({ online })
+    return NextResponse.json({ online }, {
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+    })
   } catch (error) {
     console.error("Error en /api/twitch:", error)
     return NextResponse.json({ online: false })

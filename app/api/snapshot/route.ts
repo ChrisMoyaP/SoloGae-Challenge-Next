@@ -1,40 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { calcRankValue } from "@/utils/calcRankValue"
+import { fetchRiotPlayerSoloQ } from "@/services/RiotServerService"
 
-// ===== Riot API =====
-const AMERICAS = "https://americas.api.riotgames.com"
-const LA2      = "https://la2.api.riotgames.com"
-
-function riotHeaders() {
-  return { "X-Riot-Token": process.env.RIOT_API_KEY ?? "" }
-}
-
-// ===== Helpers Riot =====
-interface LeagueEntry {
-  queueType: string
-  tier: string
-  rank: string
-  leaguePoints: number
-}
-
-async function getRankedData(gameName: string, tagLine: string): Promise<LeagueEntry | null> {
-  // Paso 1: PUUID
-  const accountUrl = `${AMERICAS}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
-  const accountRes = await fetch(accountUrl, { headers: riotHeaders() })
-  if (!accountRes.ok) return null
-  const account = await accountRes.json() as { puuid: string }
-
-  // Paso 2: ranked entries por PUUID
-  const leagueUrl = `${LA2}/lol/league/v4/entries/by-puuid/${account.puuid}`
-  const leagueRes = await fetch(leagueUrl, { headers: riotHeaders() })
-  if (!leagueRes.ok) return null
-  const entries = await leagueRes.json() as LeagueEntry[]
-
-  return entries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null
-}
-
-// ===== Endpoint =====
 export async function POST(req: NextRequest) {
   // Validar Bearer token
   const auth  = req.headers.get("authorization") ?? ""
@@ -46,8 +14,8 @@ export async function POST(req: NextRequest) {
 
   // Obtener participantes activos
   const participants = await sql`
-    SELECT id, game_name, tag_line FROM participants WHERE active = true
-  ` as { id: string; game_name: string; tag_line: string }[]
+    SELECT id, game_name, tag_line, puuid FROM participants WHERE active = true
+  ` as { id: string; game_name: string; tag_line: string; puuid?: string | null }[]
 
   let saved  = 0
   let failed = 0
@@ -55,7 +23,11 @@ export async function POST(req: NextRequest) {
 
   for (const p of participants) {
     try {
-      const entry = await getRankedData(p.game_name, p.tag_line)
+      const riotData = await fetchRiotPlayerSoloQ(p.game_name, p.tag_line, p.puuid)
+      if (!p.puuid && riotData.puuid) {
+        await sql`UPDATE participants SET puuid = ${riotData.puuid} WHERE id = ${p.id}`
+      }
+      const entry = riotData.soloQ
 
       if (!entry) {
         failed++
@@ -63,11 +35,11 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      const rankValue = calcRankValue(entry.tier, entry.rank, entry.leaguePoints)
+      const rankValue = calcRankValue(entry.tier, entry.rank, entry.lp)
 
       await sql`
         INSERT INTO rank_snapshots (participant_id, tier, rank, lp, rank_value)
-        VALUES (${p.id}, ${entry.tier}, ${entry.rank}, ${entry.leaguePoints}, ${rankValue})
+        VALUES (${p.id}, ${entry.tier}, ${entry.rank}, ${entry.lp}, ${rankValue})
         ON CONFLICT (participant_id, snapshot_date)
         DO UPDATE SET
           tier       = EXCLUDED.tier,

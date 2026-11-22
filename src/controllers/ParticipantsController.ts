@@ -1,4 +1,5 @@
 import type { Rank } from "../types/Rank"
+import type { ParticipantRow } from "../types/ParticipantsRow"
 import { ParticipantsService } from "../services/ParticipantsService"
 import { TwitchService } from "../services/TwitchService"
 import { calcRankValue } from "../utils/calcRankValue"
@@ -14,26 +15,54 @@ interface BaseParticipant {
 export class ParticipantsController {
   private participantService: ParticipantsService
   private twitchService: TwitchService
+  private hasCustomServices: boolean
 
   constructor(
-    participantService = new ParticipantsService(),
-    twitchService = new TwitchService()
+    participantService?: ParticipantsService,
+    twitchService?: TwitchService,
   ) {
-    this.participantService = participantService
-    this.twitchService = twitchService
+    this.hasCustomServices = Boolean(participantService || twitchService)
+    this.participantService = participantService ?? new ParticipantsService()
+    this.twitchService = twitchService ?? new TwitchService()
   }
 
-  async getAllOrdered() {
-    const [participantsRes, todayRes, insightsRes, activeGameRes] = await Promise.all([
-      fetch("/api/participants"),
-      fetch("/api/snapshots/today"),
-      fetch("/api/participants/insights"),
-      fetch("/api/riot/active-game"),
-    ])
+  async getAllOrdered(): Promise<ParticipantRow[]> {
+    return this.hasCustomServices
+      ? this.fetchAllOrdered()
+      : this.fetchFromLeaderboardEndpoint()
+  }
+
+  private async fetchFromLeaderboardEndpoint(): Promise<ParticipantRow[]> {
+    try {
+      const res = await fetch("/api/leaderboard")
+      if (res.ok) {
+        return (await res.json()) as ParticipantRow[]
+      }
+    } catch {
+      // Fallback al flujo individual si el endpoint agregado falla
+    }
+    return this.fetchAllOrdered()
+  }
+
+  private async fetchAllOrdered(): Promise<ParticipantRow[]> {
+    const [participantsRes, todayRes, insightsRes, activeGameRes] =
+      await Promise.all([
+        fetch("/api/participants"),
+        fetch("/api/snapshots/today"),
+        fetch("/api/participants/insights"),
+        fetch("/api/riot/active-game"),
+      ])
     const participants: BaseParticipant[] = await participantsRes.json()
     const todayMap: Record<string, number> = await todayRes.json()
-    const insightsMap: Record<string, { role: string | null; streak: boolean[]; lpUpDays: number; lpDownDays: number }> =
-      await insightsRes.json()
+    const insightsMap: Record<
+      string,
+      {
+        role: string | null
+        streak: boolean[]
+        lpUpDays: number
+        lpDownDays: number
+      }
+    > = await insightsRes.json()
     const activeGameMap: Record<string, boolean> = await activeGameRes.json()
 
     const players = await Promise.all(
@@ -47,7 +76,11 @@ export class ParticipantsController {
         const key = `${base.gameName}#${base.tagLine}`
         const snapshotRankValue = todayMap[key] ?? null
         if (snapshotRankValue !== null && data.soloQ) {
-          const currentRankValue = calcRankValue(data.soloQ.tier, data.soloQ.rank, data.soloQ.lp)
+          const currentRankValue = calcRankValue(
+            data.soloQ.tier,
+            data.soloQ.rank,
+            data.soloQ.lp,
+          )
           lpToday = currentRankValue - snapshotRankValue
         }
 
@@ -65,14 +98,22 @@ export class ParticipantsController {
           lpDownDays: insight?.lpDownDays ?? 0,
           inGame,
         }
-      })
+      }),
     )
 
     return players.sort((a, b) =>
       compareByRank(
-        { tier: a.data.soloQ?.tier ?? null, rank: (a.data.soloQ?.rank as Rank) ?? null, lp: a.data.soloQ?.lp ?? 0 },
-        { tier: b.data.soloQ?.tier ?? null, rank: (b.data.soloQ?.rank as Rank) ?? null, lp: b.data.soloQ?.lp ?? 0 },
-      )
+        {
+          tier: a.data.soloQ?.tier ?? null,
+          rank: (a.data.soloQ?.rank as Rank) ?? null,
+          lp: a.data.soloQ?.lp ?? 0,
+        },
+        {
+          tier: b.data.soloQ?.tier ?? null,
+          rank: (b.data.soloQ?.rank as Rank) ?? null,
+          lp: b.data.soloQ?.lp ?? 0,
+        },
+      ),
     )
   }
 }

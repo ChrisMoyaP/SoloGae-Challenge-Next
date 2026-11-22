@@ -7,15 +7,24 @@ function riotHeaders() {
 }
 
 export async function GET(req: NextRequest) {
-  const matchId = new URL(req.url).searchParams.get("matchId")
+  const secret = process.env.SNAPSHOT_SECRET
+  if (secret) {
+    const auth = req.headers.get("authorization") ?? ""
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : ""
+    if (token !== secret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+  }
 
-  if (!matchId) {
-    return NextResponse.json({ error: "Missing matchId" }, { status: 400 })
+  const matchId = new URL(req.url).searchParams.get("matchId")?.trim()
+
+  if (!matchId || !/^[A-Z0-9]+_\d+$/.test(matchId)) {
+    return NextResponse.json({ error: "Missing or invalid matchId" }, { status: 400 })
   }
 
   const res = await fetch(
-    `${AMERICAS}/lol/match/v5/matches/${matchId}`,
-    { headers: riotHeaders(), next: { revalidate: 0 } }
+    `${AMERICAS}/lol/match/v5/matches/${encodeURIComponent(matchId)}`,
+    { headers: riotHeaders(), next: { revalidate: 300 } }
   )
 
   if (!res.ok) {

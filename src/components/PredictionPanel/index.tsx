@@ -1,70 +1,63 @@
 "use client"
 
+import Link from "next/link"
 import type { PredictionEntry } from "@/types/Prediction"
+import { buildPlayerUrl } from "@/utils/playerUrl"
 
 interface Props {
   entries: PredictionEntry[]
 }
 
-const POSITION_COLOR = ["gold", "#c0c0c0", "#cd7f32"]
+const POSITION_COLOR = ["var(--gold)", "#cbd5e1", "#d97706"]
 
 export default function PredictionPanel({ entries }: Props) {
   if (!entries.length) {
     return (
-      <p style={{ color: "#555", textAlign: "center", fontSize: 14 }}>
-        No hay datos para calcular la predicción.
-      </p>
+      <div className="sg-card">
+        <p style={{ color: "var(--text-muted)", textAlign: "center", fontSize: 14 }}>
+          No hay datos para calcular la predicción.
+        </p>
+      </div>
     )
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        background: "var(--bg2)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: "1.25rem 1rem 1rem",
-      }}
-    >
-      <h2
-        style={{
-          margin: "0 0 1rem 0.5rem",
-          fontSize: "0.75rem",
-          fontWeight: 600,
-          color: "var(--text-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-        }}
-      >
-        Predicción del Ganador
-      </h2>
+    <div className="sg-card">
+      <div className="sg-section-header">
+        <h2 className="sg-section-title" style={{ fontSize: "1rem" }}>
+          Predicción del Ganador
+        </h2>
+        <span className="sg-badge sg-badge-tournament">Algoritmo IA / Elo</span>
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
         {entries.map((entry, idx) => {
-          const isFirst  = idx === 0
+          const isFirst = idx === 0
           const barColor = isFirst
-            ? "linear-gradient(90deg, #ffd700, #ffb300)"
-            : "linear-gradient(90deg, #4da6ff, #2979ff)"
-          const posColor = POSITION_COLOR[idx] ?? "#555"
+            ? "linear-gradient(90deg, var(--teal), var(--purple))"
+            : "linear-gradient(90deg, #00E5C2, #38BDF8)"
+          const posColor = POSITION_COLOR[idx] ?? "var(--text-muted)"
 
           return (
-            <div
+            <Link
               key={entry.alias}
+              href={buildPlayerUrl(entry.gameName, entry.tagLine)}
               style={{
                 display: "grid",
-                gridTemplateColumns: "32px 110px 1fr 56px",
+                gridTemplateColumns: "32px 120px 1fr 58px",
                 alignItems: "center",
                 gap: "0.75rem",
                 padding: "0.6rem 0.75rem",
-                background: isFirst ? "rgba(240, 180, 41, 0.05)" : "var(--bg3)",
+                background: isFirst
+                  ? "rgba(0, 229, 194, 0.08)"
+                  : "var(--bg3)",
                 border: isFirst
-                  ? "1px solid rgba(240, 180, 41, 0.2)"
+                  ? "1px solid rgba(0, 229, 194, 0.35)"
                   : "1px solid var(--border)",
-                borderRadius: 8,
+                borderRadius: 10,
+                textDecoration: "none",
               }}
             >
-              {/* Posición */}
               <div
                 style={{
                   fontWeight: 700,
@@ -76,12 +69,11 @@ export default function PredictionPanel({ entries }: Props) {
                 {isFirst ? "🏆" : idx + 1}
               </div>
 
-              {/* Alias */}
               <div
                 style={{
                   fontWeight: 600,
-                  fontSize: "0.9rem",
-                  color: isFirst ? "#ffd700" : "#eee",
+                  fontSize: "0.88rem",
+                  color: isFirst ? "var(--teal)" : "var(--ivory)",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -90,11 +82,10 @@ export default function PredictionPanel({ entries }: Props) {
                 {entry.alias}
               </div>
 
-              {/* Barra de progreso */}
               <div
                 style={{
-                  background: "var(--border)",
-                  borderRadius: 4,
+                  background: "rgba(255, 255, 255, 0.06)",
+                  borderRadius: 99,
                   height: 8,
                   overflow: "hidden",
                 }}
@@ -104,23 +95,23 @@ export default function PredictionPanel({ entries }: Props) {
                     height: "100%",
                     width: `${entry.pct}%`,
                     background: barColor,
-                    borderRadius: 4,
+                    borderRadius: 99,
                   }}
                 />
               </div>
 
-              {/* Porcentaje */}
               <div
                 style={{
                   textAlign: "right",
+                  fontFamily: "var(--font-display), 'Rajdhani', sans-serif",
                   fontWeight: 700,
-                  fontSize: "0.9rem",
-                  color: isFirst ? "#ffd700" : "#ccc",
+                  fontSize: "0.98rem",
+                  color: isFirst ? "var(--teal)" : "var(--ivory)",
                 }}
               >
                 {entry.pct.toFixed(1)}%
               </div>
-            </div>
+            </Link>
           )
         })}
       </div>

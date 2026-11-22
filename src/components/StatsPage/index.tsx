@@ -1,8 +1,10 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import type { TopsResponse, BestDaysResponse, TopEntry, DayDelta } from "@/types/Stats"
 import type { CoincidenciasResponse, DuelPair, RecentCoincidenceMatch } from "@/types/Coincidencias"
+import { buildPlayerUrl } from "@/utils/playerUrl"
 import "./styles.css"
 
 const STAT_CARDS: {
@@ -53,7 +55,12 @@ function TopCard({ title, subtitle, entries, format }: {
           {entries.map((e, i) => (
             <li key={`${e.gameName}#${e.tagLine}`} className={i === 0 ? "first" : undefined}>
               <span className="stat-top-rank">{i + 1}</span>
-              <span className="stat-top-alias">{e.alias}</span>
+              <Link
+                href={buildPlayerUrl(e.gameName, e.tagLine)}
+                className="stat-top-alias"
+              >
+                {e.alias}
+              </Link>
               <span className="stat-top-value">{format(e.value)}</span>
               <span className="stat-top-games">{e.games} partidas</span>
             </li>
