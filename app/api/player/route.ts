@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig } from "@/constants/events"
+import { computeIngestWindow } from "@/lib/ingest/matchDetail"
 
 const AMERICAS = "https://americas.api.riotgames.com"
 const LA2      = "https://la2.api.riotgames.com"
@@ -60,7 +62,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 })
   }
 
-  const cacheKey = `api:player:${gameName.toLowerCase()}#${tagLine.toLowerCase()}`
+  // Rank/LP/W-L de soloQ vienen de Riot (temporada ranked). Las partidas listadas se
+  // limitan a la ventana del torneo; antes del inicio no se piden partidas.
+  const cfg = getEventConfig()
+  const { window: matchWindow } = computeIngestWindow(Date.now(), cfg)
+  const cacheKey = eventCacheKey(`api:player:${gameName.toLowerCase()}#${tagLine.toLowerCase()}`, cfg)
   const result = await withServerCache(cacheKey, 180, async () => {
     const accountRes = await fetch(
       `${AMERICAS}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
@@ -75,10 +81,13 @@ export async function GET(req: NextRequest) {
         `${LA2}/lol/league/v4/entries/by-puuid/${account.puuid}`,
         { headers: riotHeaders(), next: { revalidate: 120 } }
       ),
-      fetch(
-        `${AMERICAS}/lol/match/v5/matches/by-puuid/${account.puuid}/ids?queue=420&start=0&count=5`,
-        { headers: riotHeaders(), next: { revalidate: 180 } }
-      ),
+      matchWindow
+        ? fetch(
+            `${AMERICAS}/lol/match/v5/matches/by-puuid/${encodeURIComponent(account.puuid)}/ids` +
+              `?queue=420&startTime=${matchWindow.startTime}&endTime=${matchWindow.endTime}&start=0&count=5`,
+            { headers: riotHeaders(), next: { revalidate: 180 } }
+          )
+        : null,
       sql`
         SELECT alias, twitch_username
         FROM participants
@@ -88,7 +97,7 @@ export async function GET(req: NextRequest) {
     ])
 
     const leagueEntries: LeagueEntry[] = leagueRes.ok    ? await leagueRes.json()    : []
-    const matchIds: string[]            = matchIdsRes.ok  ? await matchIdsRes.json() : []
+    const matchIds: string[]            = matchIdsRes?.ok ? await matchIdsRes.json() : []
     const dbRow = dbRows[0] as { alias: string; twitch_username: string | null } | undefined
 
     const soloQ = leagueEntries.find((e) => e.queueType === "RANKED_SOLO_5x5") ?? null
@@ -119,6 +128,7 @@ export async function GET(req: NextRequest) {
 
     for (const detail of matchDetails) {
       if (!detail) continue
+      if (!matchWindow || detail.info.gameStartTimestamp < cfg.start.getTime() || detail.info.gameStartTimestamp >= cfg.end.getTime()) continue
       const p = detail.info.participants.find((pt) => pt.puuid === account.puuid)
       if (!p) continue
       matches.push({

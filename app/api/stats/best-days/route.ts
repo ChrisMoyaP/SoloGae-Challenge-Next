@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig, getEventSnapshotDateRange } from "@/constants/events"
 
 const TOP_N = 8
 
@@ -23,12 +24,16 @@ interface DayDelta {
 }
 
 export async function GET() {
-  const payload = await withServerCache("api:stats:best-days", 600, async () => {
+  const cfg = getEventConfig()
+  const { from, to } = getEventSnapshotDateRange(cfg)
+  const payload = await withServerCache(eventCacheKey("api:stats:best-days", cfg), 600, async () => {
     const rows = await sql`
       SELECT p.alias, rs.snapshot_date::text, rs.tier, rs.rank, rs.lp, rs.rank_value
       FROM rank_snapshots rs
       JOIN participants p ON p.id = rs.participant_id
       WHERE p.active = true
+        AND rs.snapshot_date >= ${from}::date
+        AND rs.snapshot_date <= ${to}::date
       ORDER BY p.alias ASC, rs.snapshot_date ASC
     ` as SnapshotRow[]
 

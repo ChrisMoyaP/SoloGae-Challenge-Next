@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey } from "@/constants/events"
 
 export async function GET() {
-  const rows = await withServerCache("api:participants:list", 180, async () => {
+  const rows = await withServerCache(eventCacheKey("api:participants:list"), 180, async () => {
     return sql`
       SELECT
         game_name        AS "gameName",

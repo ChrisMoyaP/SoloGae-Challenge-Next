@@ -15,6 +15,8 @@ type TimeLeft = {
   minutes: number
   seconds: number
   finished: boolean
+  /** null hasta el primer cálculo en el cliente (evita discrepancias SSR/cliente). */
+  phase: "before" | "active" | "finished" | null
 }
 
 const pad = (n: number) => String(n).padStart(2, "0")
@@ -26,12 +28,14 @@ const Countdown = ({ start, end, compact = false }: Props) => {
     minutes: 0,
     seconds: 0,
     finished: false,
+    phase: null,
   })
 
   const calculate = () => {
     const now = new Date()
-    if (now > end) {
-      return setState({ days: 0, hours: 0, minutes: 0, seconds: 0, finished: true })
+    // Intervalo [start, end): en el instante `end` el torneo ya terminó.
+    if (now.getTime() >= end.getTime()) {
+      return setState({ days: 0, hours: 0, minutes: 0, seconds: 0, finished: true, phase: "finished" })
     }
 
     const target = now < start ? start : end
@@ -42,7 +46,7 @@ const Countdown = ({ start, end, compact = false }: Props) => {
     const minutes = Math.floor((diff / (1000 * 60)) % 60)
     const seconds = Math.floor((diff / 1000) % 60)
 
-    setState({ days, hours, minutes, seconds, finished: false })
+    setState({ days, hours, minutes, seconds, finished: false, phase: now < start ? "before" : "active" })
   }
 
   useEffect(() => {
@@ -52,12 +56,14 @@ const Countdown = ({ start, end, compact = false }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const now = new Date()
-  const label = state.finished
-    ? "TORNEO FINALIZADO"
-    : now < start
-    ? "COMIENZA EN"
-    : "TERMINA EN"
+  const label =
+    state.phase === "finished"
+      ? "TORNEO FINALIZADO"
+      : state.phase === "before"
+      ? "COMIENZA EN"
+      : state.phase === "active"
+      ? "TERMINA EN"
+      : "\u00a0"
 
   return (
     <div className={`countdown-card${compact ? " compact" : ""}`}>

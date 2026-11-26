@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig } from "@/constants/events"
 
 interface RecentTournamentMatchRow {
   match_id: string
@@ -18,7 +19,10 @@ interface RecentTournamentMatchRow {
 }
 
 export async function GET() {
-  const matches = await withServerCache("api:stats:recent-matches", 180, async () => {
+  const cfg = getEventConfig()
+  const startMs = cfg.start.getTime()
+  const endMs = cfg.end.getTime()
+  const matches = await withServerCache(eventCacheKey("api:stats:recent-matches", cfg), 180, async () => {
     try {
       const rows = await sql`
         SELECT
@@ -37,6 +41,8 @@ export async function GET() {
         FROM match_participants mp
         JOIN participants p ON p.id = mp.participant_id
         WHERE p.active = true
+          AND mp.game_start_timestamp >= ${startMs}
+          AND mp.game_start_timestamp < ${endMs}
         ORDER BY mp.game_start_timestamp DESC
         LIMIT 8
       ` as unknown as RecentTournamentMatchRow[]

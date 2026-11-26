@@ -148,30 +148,25 @@ const ParticipantsTable = ({
           valB = soloB ? soloB.lp : -1
           break
 
+        // Victorias/derrotas/WR: partidas del torneo (DB), no la temporada de Riot.
         case "wins":
-          valA = soloA ? soloA.wins : -1
-          valB = soloB ? soloB.wins : -1
+          valA = a.tournament.wins
+          valB = b.tournament.wins
           break
 
         case "losses":
-          valA = soloA ? soloA.losses : -1
-          valB = soloB ? soloB.losses : -1
+          valA = a.tournament.losses
+          valB = b.tournament.losses
           break
 
         case "games":
-          valA = soloA ? soloA.wins + soloA.losses : -1
-          valB = soloB ? soloB.wins + soloB.losses : -1
+          valA = a.tournament.games
+          valB = b.tournament.games
           break
 
         case "winrate":
-          valA =
-            soloA && soloA.wins + soloA.losses > 0
-              ? soloA.wins / (soloA.wins + soloA.losses)
-              : -1
-          valB =
-            soloB && soloB.wins + soloB.losses > 0
-              ? soloB.wins / (soloB.wins + soloB.losses)
-              : -1
+          valA = a.tournament.games > 0 ? a.tournament.wins / a.tournament.games : -1
+          valB = b.tournament.games > 0 ? b.tournament.wins / b.tournament.games : -1
           break
 
         case "lpToday":
@@ -451,17 +446,17 @@ const ParticipantsTable = ({
                       </td>
 
                       <td data-label="Victorias" className="wins-cell">
-                        {solo ? solo.wins : "—"}
+                        {item.tournament.wins}
                       </td>
 
                       <td data-label="Derrotas" className="losses-cell">
-                        {solo ? solo.losses : "—"}
+                        {item.tournament.losses}
                       </td>
 
                       <td data-label="WR">
-                        {solo ? (
+                        {item.tournament.games > 0 ? (
                           <span className="wr-badge">
-                            {calcWinrate(solo.wins, solo.losses)}%
+                            {calcWinrate(item.tournament.wins, item.tournament.losses)}%
                           </span>
                         ) : (
                           "—"

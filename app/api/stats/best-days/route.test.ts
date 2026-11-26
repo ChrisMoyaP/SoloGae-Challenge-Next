@@ -70,4 +70,14 @@ describe("GET /api/stats/best-days", () => {
     expect(body.subidas).toEqual([])
     expect(body.bajadas).toEqual([])
   })
+
+  it("solo usa snapshots del periodo (fechas America/Santiago) y con tablas vacías no falla", async () => {
+    sqlMock.mockResolvedValue([])
+
+    const { GET } = await import("./route")
+    const body = await (await GET()).json()
+
+    expect(body).toEqual({ subidas: [], bajadas: [] })
+    expect(sqlMock.mock.calls[0].slice(1)).toEqual(["2026-11-23", "2026-11-30"])
+  })
 })

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { isBearerAuthorized } from "@/lib/adminAuth"
 
 const AMERICAS = "https://americas.api.riotgames.com"
 
@@ -7,13 +8,9 @@ function riotHeaders() {
 }
 
 export async function GET(req: NextRequest) {
-  const secret = process.env.SNAPSHOT_SECRET
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? ""
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : ""
-    if (token !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  // Endpoint de depuración (admin): falla cerrado si SNAPSHOT_SECRET no está configurado.
+  if (!isBearerAuthorized(req, [process.env.SNAPSHOT_SECRET])) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const matchId = new URL(req.url).searchParams.get("matchId")?.trim()

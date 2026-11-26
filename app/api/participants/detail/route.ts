@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig } from "@/constants/events"
 
 const MATCH_LIMIT = 20
 
@@ -47,7 +48,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 })
   }
 
-  const cacheKey = `api:participants:detail:${gameName.toLowerCase()}#${tagLine.toLowerCase()}`
+  const cfg = getEventConfig()
+  const startMs = cfg.start.getTime()
+  const endMs = cfg.end.getTime()
+  const cacheKey = eventCacheKey(`api:participants:detail:${gameName.toLowerCase()}#${tagLine.toLowerCase()}`, cfg)
   const payload = await withServerCache(cacheKey, 180, async () => {
     const [matchRows, statsRows] = await Promise.all([
       sql`
@@ -58,6 +62,9 @@ export async function GET(req: NextRequest) {
         FROM match_participants mp
         JOIN participants p ON p.id = mp.participant_id
         WHERE LOWER(p.game_name) = LOWER(${gameName}) AND LOWER(p.tag_line) = LOWER(${tagLine})
+          AND p.active = true
+          AND mp.game_start_timestamp >= ${startMs}
+          AND mp.game_start_timestamp < ${endMs}
         ORDER BY mp.game_start_timestamp DESC
         LIMIT ${MATCH_LIMIT}
       ` as unknown as Promise<MatchRow[]>,
@@ -74,6 +81,9 @@ export async function GET(req: NextRequest) {
         FROM match_participants mp
         JOIN participants p ON p.id = mp.participant_id
         WHERE LOWER(p.game_name) = LOWER(${gameName}) AND LOWER(p.tag_line) = LOWER(${tagLine})
+          AND p.active = true
+          AND mp.game_start_timestamp >= ${startMs}
+          AND mp.game_start_timestamp < ${endMs}
       ` as unknown as Promise<StatsRow[]>,
     ])
 

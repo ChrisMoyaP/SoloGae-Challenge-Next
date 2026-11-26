@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig, getEventSnapshotDateRange, toEventDateString } from "@/constants/events"
 
 interface TodayRow {
   game_name: string
@@ -9,7 +10,12 @@ interface TodayRow {
 }
 
 export async function GET() {
-  const result = await withServerCache("api:snapshots:today", 300, async () => {
+  const cfg = getEventConfig()
+  const { from, to } = getEventSnapshotDateRange(cfg)
+  // Fecha de hoy en America/Santiago (no CURRENT_DATE del servidor/DB, normalmente UTC)
+  const today = toEventDateString(new Date())
+  const result = await withServerCache(eventCacheKey(`api:snapshots:today:${today}`, cfg), 300, async () => {
+    if (today < from || today > to) return {}
     const rows = await sql`
       SELECT
         p.game_name,
@@ -18,7 +24,7 @@ export async function GET() {
       FROM rank_snapshots rs
       JOIN participants p ON p.id = rs.participant_id
       WHERE p.active = true
-        AND rs.snapshot_date = CURRENT_DATE
+        AND rs.snapshot_date = ${today}::date
     ` as TodayRow[]
 
     const map: Record<string, number> = {}

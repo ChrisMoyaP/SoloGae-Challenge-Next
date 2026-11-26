@@ -7,7 +7,8 @@ export function middleware(req: NextRequest) {
   const isAdminRoute =
     pathname.startsWith("/api/setup") ||
     pathname.startsWith("/api/snapshot") ||
-    pathname.startsWith("/api/ingest-matches")
+    pathname.startsWith("/api/ingest-matches") ||
+    pathname.startsWith("/api/match-debug")
 
   const limit = isAdminRoute ? 5 : 60
   const bucketId = isAdminRoute ? `admin:${pathname}` : "api:public"

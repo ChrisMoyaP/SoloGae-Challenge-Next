@@ -7,9 +7,10 @@ vi.mock("@/lib/db", () => ({
 }))
 
 const participants = [
-  { id: "1", game_name: "Nico", tag_line: "LAS", alias: "NicoAlias" },
-  { id: "2", game_name: "Solo", tag_line: "LAS", alias: "SoloAlias" },
-  { id: "3", game_name: "NoRank", tag_line: "LAS", alias: "NoRankAlias" },
+  // winrate del TORNEO (match_participants en el periodo), no de Riot
+  { id: "1", game_name: "Nico", tag_line: "LAS", alias: "NicoAlias", tournament_games: 10, tournament_wins: 5 },
+  { id: "2", game_name: "Solo", tag_line: "LAS", alias: "SoloAlias", tournament_games: 8, tournament_wins: 2 },
+  { id: "3", game_name: "NoRank", tag_line: "LAS", alias: "NoRankAlias", tournament_games: 0, tournament_wins: 0 },
 ]
 
 const snapshotAvgs = [
@@ -93,5 +94,31 @@ describe("GET /api/prediction", () => {
     const body = await response.json()
 
     expect(body.map((r: { alias: string }) => r.alias)).toEqual(["NicoAlias", "SoloAlias", "NoRankAlias"])
+  })
+
+  it("con 0 partidas del torneo el winrate es 0 (sin dividir por cero) aunque Riot tenga temporada", async () => {
+    sqlMock.mockImplementation((strings: TemplateStringsArray) => {
+      const query = strings.join("")
+      if (query.includes("FROM participants")) {
+        return Promise.resolve([{ id: "1", game_name: "Nico", tag_line: "LAS", alias: "NicoAlias", tournament_games: 0, tournament_wins: 0 }])
+      }
+      return Promise.resolve([])
+    })
+    const { GET } = await import("./route")
+    const body = await (await GET()).json()
+    expect(body[0].winrate).toBe(0)
+    expect(body[0].avgDailyRankValue).toBe(0)
+    expect(body[0].score).toBe(1650)
+  })
+
+  it("filtra partidas y snapshots por la ventana del evento", async () => {
+    const { GET } = await import("./route")
+    await GET()
+    const start = Date.parse("2026-11-23T00:00:00-03:00")
+    const end = Date.parse("2026-12-01T00:00:00-03:00")
+    const participantsCall = sqlMock.mock.calls.find((c) => (c[0] as TemplateStringsArray).join("").includes("FROM participants"))!
+    expect(participantsCall.slice(1)).toEqual([start, end])
+    const snapCall = sqlMock.mock.calls.find((c) => (c[0] as TemplateStringsArray).join("").includes("rank_snapshots"))!
+    expect(snapCall.slice(2)).toEqual(["2026-11-23", "2026-11-30"])
   })
 })

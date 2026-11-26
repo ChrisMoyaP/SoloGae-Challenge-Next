@@ -6,6 +6,7 @@ import { calcRankValue } from "@/utils/calcRankValue"
 import { compareByRank } from "@/utils/sortByRank"
 import type { ParticipantRow } from "@/types/ParticipantsRow"
 import type { Rank } from "@/types/Rank"
+import { eventCacheKey, getEventConfig, getEventSnapshotDateRange, toEventDateString } from "@/constants/events"
 
 const LA2 = "https://la2.api.riotgames.com"
 const STREAK_LENGTH = 10
@@ -49,7 +50,14 @@ function mode(values: string[]): string | null {
 }
 
 export async function GET() {
-  const rows = await withServerCache("api:leaderboard:all", 60, async () => {
+  const cfg = getEventConfig()
+  const startMs = cfg.start.getTime()
+  const endMs = cfg.end.getTime()
+  const { from, to } = getEventSnapshotDateRange(cfg)
+  // "Hoy" en America/Santiago; fuera del periodo no hay snapshot del día que comparar.
+  const today = toEventDateString(new Date())
+  const todayInPeriod = today >= from && today <= to
+  const rows = await withServerCache(eventCacheKey(`api:leaderboard:all:${today}`, cfg), 60, async () => {
     const [participants, todayRows, matchRows, snapshotRows] = await Promise.all([
       sql`
         SELECT
@@ -66,13 +74,15 @@ export async function GET() {
         SELECT p.game_name, p.tag_line, rs.rank_value
         FROM rank_snapshots rs
         JOIN participants p ON p.id = rs.participant_id
-        WHERE p.active = true AND rs.snapshot_date = CURRENT_DATE
+        WHERE p.active = true AND rs.snapshot_date = ${today}::date AND ${todayInPeriod}::boolean
       ` as unknown as Promise<TodayRow[]>,
       sql`
         SELECT p.game_name, p.tag_line, mp.team_position, mp.win
         FROM match_participants mp
         JOIN participants p ON p.id = mp.participant_id
         WHERE p.active = true
+          AND mp.game_start_timestamp >= ${startMs}
+          AND mp.game_start_timestamp < ${endMs}
         ORDER BY mp.game_start_timestamp DESC
       ` as unknown as Promise<MatchInsightRow[]>,
       sql`
@@ -80,6 +90,8 @@ export async function GET() {
         FROM rank_snapshots rs
         JOIN participants p ON p.id = rs.participant_id
         WHERE p.active = true
+          AND rs.snapshot_date >= ${from}::date
+          AND rs.snapshot_date <= ${to}::date
         ORDER BY rs.snapshot_date ASC
       ` as unknown as Promise<SnapshotInsightRow[]>,
     ])
@@ -141,6 +153,7 @@ export async function GET() {
         }
 
         const pMatches = matchesByPlayer.get(key) ?? []
+        const tournamentWins = pMatches.filter((m) => m.win).length
         const pSnapshots = snapshotsByPlayer.get(key) ?? []
         let lpUpDays = 0
         let lpDownDays = 0
@@ -177,6 +190,12 @@ export async function GET() {
           lpUpDays,
           lpDownDays,
           inGame,
+          // Partidas del torneo (match_participants dentro de [START, END)), no de Riot.
+          tournament: {
+            games: pMatches.length,
+            wins: tournamentWins,
+            losses: pMatches.length - tournamentWins,
+          },
         }
       },
     )

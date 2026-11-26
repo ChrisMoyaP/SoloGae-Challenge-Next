@@ -6,6 +6,7 @@ import ParticipantsTable from "@/components/ParticipantsTable"
 import PredictionPanel from "@/components/PredictionPanel"
 import { isRateLimited } from "@/lib/clientApi"
 import { useLeaderboardQuery, usePredictionQuery, useSnapshotsQuery } from "@/hooks/useSharedQueries"
+import { getEventConfig } from "@/constants/events"
 
 const RankChart = dynamic(() => import("@/components/RankChart"), {
   ssr: false,
@@ -63,19 +64,18 @@ function RankingContent() {
 
   const kpis = useMemo(() => {
     const activeCount = rows.filter((p) => p.base.twitch !== "RETIRADO").length
+    // Solo partidas del torneo (match_participants dentro del periodo), no la temporada de Riot.
     let totalGames = 0
     let totalWins = 0
     for (const r of rows) {
-      if (r.data.soloQ) {
-        totalGames += r.data.soloQ.wins + r.data.soloQ.losses
-        totalWins += r.data.soloQ.wins
-      }
+      totalGames += r.tournament.games
+      totalWins += r.tournament.wins
     }
     const globalWr =
-      totalGames > 0 ? Number(((totalWins / totalGames) * 100).toFixed(1)) : 50.0
+      totalGames > 0 ? Number(((totalWins / totalGames) * 100).toFixed(1)) : 0
 
     return {
-      activeCount: activeCount || rows.length,
+      activeCount,
       totalGames,
       totalWins,
       globalWr,
@@ -111,7 +111,7 @@ function RankingContent() {
           <div>
             <div className="sg-kpi-label">Participantes</div>
             <div className="sg-kpi-value">{kpis.activeCount}</div>
-            <div className="sg-kpi-sub">Temporada 2026 activa</div>
+            <div className="sg-kpi-sub">{getEventConfig().name}</div>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ function RankingContent() {
             <div className="sg-kpi-value">
               {kpis.totalGames.toLocaleString("es-CL")}
             </div>
-            <div className="sg-kpi-sub">Ranked Solo/Duo</div>
+            <div className="sg-kpi-sub">SoloQ dentro del torneo</div>
           </div>
           <span style={{ fontSize: "1.5rem", color: "var(--teal)" }}>📊</span>
         </div>

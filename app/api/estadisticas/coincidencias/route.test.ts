@@ -91,4 +91,15 @@ describe("GET /api/estadisticas/coincidencias", () => {
       recentMatches: [],
     })
   })
+
+  it("filtra por la ventana del evento [START, END) y participantes activos", async () => {
+    sqlMock.mockResolvedValue([])
+
+    const { GET } = await import("./route")
+    await GET()
+
+    const [strings, ...values] = sqlMock.mock.calls[0] as [TemplateStringsArray, ...unknown[]]
+    expect(strings.join("?")).toContain("p.active = true")
+    expect(values).toEqual([Date.parse("2026-11-23T00:00:00-03:00"), Date.parse("2026-12-01T00:00:00-03:00")])
+  })
 })

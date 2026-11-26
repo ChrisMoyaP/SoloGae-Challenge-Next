@@ -17,6 +17,7 @@ import {
 } from "@/utils/dataDragon"
 import { ApiRequestError } from "@/lib/clientApi"
 import { usePlayerQuery, useSnapshotsQuery, useTournamentStatsQuery } from "@/hooks/useSharedQueries"
+import { formatEventDate, getEventConfig } from "@/constants/events"
 
 const TrendChart = dynamic(() => import("./TrendChart"), {
   ssr: false,
@@ -209,8 +210,8 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
     return null
   }
 
+  const event = getEventConfig()
   const { soloQ } = data ?? {}
-  const wr = soloQ ? winrate(soloQ.wins, soloQ.wins + soloQ.losses) : 0
   const emblemUrl = getTierEmblemUrl(soloQ?.tier)
 
   const matches = useMemo(() => data?.matches ?? [], [data?.matches])
@@ -257,6 +258,11 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
         p.tagLine.toLowerCase() === tagLine.toLowerCase(),
     ) ?? null
 
+  // Victorias/derrotas/WR del torneo (match_participants en el periodo), no de Riot.
+  const tournamentWins = me?.wins ?? 0
+  const tournamentLosses = me?.losses ?? 0
+  const wr = winrate(tournamentWins, tournamentWins + tournamentLosses)
+
   const maxWr = tournament
     ? Math.max(...tournament.players.map((p) => p.wr), 1)
     : 1
@@ -264,49 +270,32 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
   const rvMax = tournament ? Math.max(tournament.maxRankValue, rvMin + 1) : 1
   const rvRange = rvMax - rvMin
 
-  // Datos para el gráfico de Tendencia de rendimiento del jugador
+  // Tendencia: SOLO snapshots reales del periodo. Sin datos suficientes no se inventan puntos.
+  const playerSnapshotCount = useMemo(() => {
+    const alias = data?.alias
+    if (!alias) return 0
+    return snapshots.find((s) => s.alias.toLowerCase() === alias.toLowerCase())?.snapshots.length ?? 0
+  }, [data?.alias, snapshots])
+
   const trendData = useMemo(() => {
     const alias = data?.alias
     const playerSnap = alias
       ? snapshots.find((s) => s.alias.toLowerCase() === alias.toLowerCase())
       : null
 
-    if (playerSnap && playerSnap.snapshots.length >= 2) {
-      return playerSnap.snapshots.map((s) => {
-        const [, m, d] = s.date.split("-")
-        return {
-          label: `${d}/${m}`,
-          value: s.rankValue,
-          meta: `${formatTierEs(s.tier, s.rank)} (${s.lp} LP)`,
-        }
-      })
-    }
-
-    // Fallback visual con el rendimiento de las últimas partidas si aún hay pocos snapshots
-    if (matches.length > 0) {
-      const base = me?.rankValue || 1400
-      let acc = base - matches.length * 15
-      return matches
-        .slice()
-        .reverse()
-        .map((m, idx) => {
-          acc += m.win ? 24 : -18
-          return {
-            label: `P${idx + 1}`,
-            value: acc,
-            meta: `${m.championName} (${m.kills}/${m.deaths}/${m.assists})`,
-          }
-        })
-    }
-
-    return [
-      { label: "Inicio", value: 1200, meta: "Base" },
-      { label: "Actual", value: me?.rankValue || 1350, meta: "Actual" },
-    ]
-  }, [data?.alias, snapshots, matches, me?.rankValue])
+    if (!playerSnap || playerSnap.snapshots.length < 2) return []
+    return playerSnap.snapshots.map((s) => {
+      const [, m, d] = s.date.split("-")
+      return {
+        label: `${d}/${m}`,
+        value: s.rankValue,
+        meta: `${formatTierEs(s.tier, s.rank)} (${s.lp} LP)`,
+      }
+    })
+  }, [data?.alias, snapshots])
 
   const trendDeltaPct = useMemo(() => {
-    if (trendData.length < 2) return "+0%"
+    if (trendData.length < 2) return "—"
     const first = trendData[0].value || 1
     const last = trendData[trendData.length - 1].value || first
     const pct = Math.round(((last - first) / first) * 100)
@@ -423,7 +412,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
             ))}
           </nav>
 
-          {/* ── Fila 1: Rango actual | Temporada 2026 | Información ── */}
+          {/* ── Fila 1: Rango actual (Riot) | Partidas del torneo | Información ── */}
           {(activeTab === "resumen" || activeTab === "estadisticas") && (
             <section className="sg-prof-top-grid">
               {/* Card 1: Rango actual */}
@@ -457,23 +446,23 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                 </div>
               </div>
 
-              {/* Card 2: Temporada 2026 */}
+              {/* Card 2: partidas del torneo (DB), no temporada ranked de Riot */}
               <div className="sg-card sg-prof-season-card">
-                <div className="sg-prof-card-title">Temporada 2026</div>
+                <div className="sg-prof-card-title">{event.name}</div>
                 <div className="sg-prof-season-body">
                   <div className="sg-prof-wl-col">
                     <div className="sg-prof-wl-item">
                       <span className="sg-prof-wl-icon teal">✦</span>
                       <div>
                         <div className="sg-prof-wl-label">Victorias</div>
-                        <div className="sg-prof-wl-val">{soloQ?.wins ?? 0}</div>
+                        <div className="sg-prof-wl-val">{tournamentWins}</div>
                       </div>
                     </div>
                     <div className="sg-prof-wl-item">
                       <span className="sg-prof-wl-icon coral">⚡</span>
                       <div>
                         <div className="sg-prof-wl-label">Derrotas</div>
-                        <div className="sg-prof-wl-val">{soloQ?.losses ?? 0}</div>
+                        <div className="sg-prof-wl-val">{tournamentLosses}</div>
                       </div>
                     </div>
                   </div>
@@ -520,8 +509,8 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                     </span>
                   </div>
                   <div className="sg-prof-info-row">
-                    <span className="sg-prof-info-label">📅 Miembro desde</span>
-                    <span className="sg-prof-info-val">Ago. 2026</span>
+                    <span className="sg-prof-info-label">📅 Inicio del torneo</span>
+                    <span className="sg-prof-info-val">{formatEventDate(event.start)}</span>
                   </div>
                 </div>
               </div>
@@ -541,7 +530,15 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
                 </div>
 
                 <div style={{ width: "100%", height: 210 }}>
-                  <TrendChart data={trendData} />
+                  {trendData.length >= 2 ? (
+                    <TrendChart data={trendData} />
+                  ) : (
+                    <p className="empty-state">
+                      {playerSnapshotCount === 0
+                        ? "Sin línea base: aún no hay snapshots de rango en este torneo."
+                        : "Solo existe la línea base; la tendencia aparecerá con el próximo snapshot diario."}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -596,7 +593,7 @@ export default function PlayerProfile({ gameName, tagLine, onBack }: Props) {
               <section className="sg-card" style={{ marginBottom: "1.25rem" }}>
                 <div className="sg-section-header">
                   <h2 className="sg-prof-card-title" style={{ margin: 0 }}>
-                    Comparativa contra el Torneo SoloGae
+                    Comparativa contra {event.name}
                   </h2>
                   <span className="sg-badge sg-badge-tournament">
                     Puesto #{me.position} de {tournament.players.length}
