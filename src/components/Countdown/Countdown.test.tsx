@@ -34,4 +34,24 @@ describe("Countdown component", () => {
 
     expect(screen.getByText("TORNEO FINALIZADO")).toBeDefined()
   })
+
+  it("el fin es exclusivo: en el instante end ya muestra TORNEO FINALIZADO", () => {
+    vi.useFakeTimers()
+    const start = new Date("2026-11-23T00:00:00-03:00")
+    const end = new Date("2026-12-01T00:00:00-03:00")
+    vi.setSystemTime(end)
+
+    render(<Countdown start={start} end={end} />)
+
+    expect(screen.getByText("TORNEO FINALIZADO")).toBeDefined()
+  })
+
+  it("muestra COMIENZA EN antes del inicio", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-11-22T23:59:00-03:00"))
+
+    render(<Countdown start={new Date("2026-11-23T00:00:00-03:00")} end={new Date("2026-12-01T00:00:00-03:00")} />)
+
+    expect(screen.getByText("COMIENZA EN")).toBeDefined()
+  })
 })

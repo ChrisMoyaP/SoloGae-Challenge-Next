@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig } from "@/constants/events"
 
 const TOP_N = 5
 
@@ -37,7 +38,10 @@ function topBy(rows: AggRow[], valueOf: (r: AggRow) => number): TopEntry[] {
 }
 
 export async function GET() {
-  const payload = await withServerCache("api:stats:tops", 300, async () => {
+  const cfg = getEventConfig()
+  const startMs = cfg.start.getTime()
+  const endMs = cfg.end.getTime()
+  const payload = await withServerCache(eventCacheKey("api:stats:tops", cfg), 300, async () => {
     const rows = await sql`
       SELECT
         p.alias, p.game_name, p.tag_line,
@@ -49,6 +53,8 @@ export async function GET() {
       FROM match_participants mp
       JOIN participants p ON p.id = mp.participant_id
       WHERE p.active = true
+        AND mp.game_start_timestamp >= ${startMs}
+        AND mp.game_start_timestamp < ${endMs}
       GROUP BY p.id, p.alias, p.game_name, p.tag_line
     ` as unknown as AggRow[]
 

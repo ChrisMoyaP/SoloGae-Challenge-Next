@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import Countdown from "@/components/Countdown"
-import { EVENT_END, EVENT_START } from "@/constants/events"
+import { formatEventRange, getEventConfig } from "@/constants/events"
+import { useEventPhase } from "@/hooks/useEventPhase"
 import { calcWinrate } from "@/utils/CalcWinrate"
 import {
   buildPlayerUrl,
@@ -42,7 +43,15 @@ function formatRelativeTime(ts: number): string {
   return `Hace ${days} d`
 }
 
+const PHASE_BADGE = {
+  before: "PRÓXIMAMENTE",
+  active: "EN CURSO",
+  finished: "FINALIZADO",
+} as const
+
 export default function HomePage() {
+  const event = getEventConfig()
+  const phase = useEventPhase(event)
   const leaderboard = useLeaderboardQuery()
   const predictionQuery = usePredictionQuery()
   const rows = leaderboard.data ?? []
@@ -75,7 +84,7 @@ export default function HomePage() {
       {/* ── Hero Banner (01. Inicio) ── */}
       <section className="sg-hero">
         <div className="sg-hero-content">
-          <span className="sg-hero-kicker">TEMPORADA 2026</span>
+          <span className="sg-hero-kicker">{event.name.toUpperCase()}</span>
           <h1 className="sg-hero-title">
             GRANDES JUGADORES HACEN <span className="accent">HISTORIA</span>
           </h1>
@@ -101,7 +110,7 @@ export default function HomePage() {
               className="sg-hero-art-logo"
             />
             <div>
-              <div className="sg-badge sg-badge-teal">EN CURSO</div>
+              <div className="sg-badge sg-badge-teal">{phase ? PHASE_BADGE[phase] : "\u00a0"}</div>
               <div
                 style={{
                   fontWeight: 700,
@@ -109,7 +118,7 @@ export default function HomePage() {
                   marginTop: "0.35rem",
                 }}
               >
-                SoloGae Challenge
+                {event.name}
               </div>
               <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
                 Pozo actual: ${formatCLP(prize)} CLP
@@ -138,10 +147,10 @@ export default function HomePage() {
             <div>
               <div className="sg-summary-kicker">TEMPORADA ACTUAL</div>
               <h2 className="sg-summary-heading">Horizonte SoloGae</h2>
-              <div className="sg-summary-meta">7 ago. – 31 dic. 2026</div>
+              <div className="sg-summary-meta">{formatEventRange(event)}</div>
             </div>
           </div>
-          <Countdown start={EVENT_START} end={EVENT_END} compact />
+          <Countdown start={event.start} end={event.end} compact />
         </div>
 
         {/* Card 2: Torneo / Premio Total */}
@@ -161,7 +170,7 @@ export default function HomePage() {
           </div>
           <div className="sg-summary-footer">
             <span>
-              {activePlayers || 12} jugadores activos · Premio especial
+              {activePlayers} jugadores activos · Premio especial
             </span>
             <Link
               href="/ranking"
@@ -222,7 +231,8 @@ export default function HomePage() {
               ))
             : featuredPlayers.map((p) => {
                 const solo = p.data.soloQ
-                const wr = solo ? calcWinrate(solo.wins, solo.losses) : 0
+                // WR de las partidas del torneo (no de la temporada ranked de Riot)
+                const wr = calcWinrate(p.tournament.wins, p.tournament.losses)
                 return (
                   <Link
                     key={`${p.base.gameName}#${p.base.tagLine}`}
@@ -351,10 +361,10 @@ export default function HomePage() {
                           {solo ? solo.lp.toLocaleString("es-CL") : "—"}
                         </td>
                         <td style={{ fontWeight: 600 }}>
-                          {solo ? solo.wins : "—"}
+                          {item.tournament.wins}
                         </td>
                         <td style={{ color: "var(--text-muted)" }}>
-                          {solo ? solo.losses : "—"}
+                          {item.tournament.losses}
                         </td>
                       </tr>
                     )
@@ -386,7 +396,7 @@ export default function HomePage() {
               >
                 {loading
                   ? "Cargando partidas recientes..."
-                  : "Aún no hay partidas recientes registradas."}
+                  : "Aún no hay partidas del torneo registradas."}
               </p>
             ) : (
               recentMatches.slice(0, 5).map((m) => (

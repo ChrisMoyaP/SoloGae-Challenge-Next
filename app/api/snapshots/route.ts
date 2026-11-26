@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig, getEventSnapshotDateRange } from "@/constants/events"
 
 interface SnapshotRow {
   alias: string
@@ -12,7 +13,9 @@ interface SnapshotRow {
 }
 
 export async function GET() {
-  const result = await withServerCache("api:snapshots:all", 600, async () => {
+  const cfg = getEventConfig()
+  const { from, to } = getEventSnapshotDateRange(cfg)
+  const result = await withServerCache(eventCacheKey("api:snapshots:all", cfg), 600, async () => {
     const rows = await sql`
       SELECT
         p.alias,
@@ -24,6 +27,8 @@ export async function GET() {
       FROM rank_snapshots rs
       JOIN participants p ON p.id = rs.participant_id
       WHERE p.active = true
+        AND rs.snapshot_date >= ${from}::date
+        AND rs.snapshot_date <= ${to}::date
       ORDER BY rs.snapshot_date ASC, p.alias ASC
     ` as SnapshotRow[]
 

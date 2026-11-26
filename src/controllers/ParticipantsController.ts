@@ -97,6 +97,8 @@ export class ParticipantsController {
           lpUpDays: insight?.lpUpDays ?? 0,
           lpDownDays: insight?.lpDownDays ?? 0,
           inGame,
+          // Ruta legada (solo usada en tests): no conoce las partidas del torneo.
+          tournament: { games: 0, wins: 0, losses: 0 },
         }
       }),
     )

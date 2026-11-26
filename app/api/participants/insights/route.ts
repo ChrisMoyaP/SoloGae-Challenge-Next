@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig, getEventSnapshotDateRange } from "@/constants/events"
 
 const STREAK_LENGTH = 10
 
@@ -34,13 +35,19 @@ function mode(values: string[]): string | null {
 }
 
 export async function GET() {
-  const result = await withServerCache("api:participants:insights", 180, async () => {
+  const cfg = getEventConfig()
+  const startMs = cfg.start.getTime()
+  const endMs = cfg.end.getTime()
+  const { from, to } = getEventSnapshotDateRange(cfg)
+  const result = await withServerCache(eventCacheKey("api:participants:insights", cfg), 180, async () => {
     const [matchRows, snapshotRows] = await Promise.all([
       sql`
         SELECT p.game_name, p.tag_line, mp.team_position, mp.win, mp.game_start_timestamp
         FROM match_participants mp
         JOIN participants p ON p.id = mp.participant_id
         WHERE p.active = true
+          AND mp.game_start_timestamp >= ${startMs}
+          AND mp.game_start_timestamp < ${endMs}
         ORDER BY mp.game_start_timestamp DESC
       ` as unknown as Promise<MatchRow[]>,
       sql`
@@ -48,6 +55,8 @@ export async function GET() {
         FROM rank_snapshots rs
         JOIN participants p ON p.id = rs.participant_id
         WHERE p.active = true
+          AND rs.snapshot_date >= ${from}::date
+          AND rs.snapshot_date <= ${to}::date
         ORDER BY rs.snapshot_date ASC
       ` as unknown as Promise<SnapshotRow[]>,
     ])

@@ -15,4 +15,10 @@ export type ParticipantRow = {
   lpUpDays: number
   lpDownDays: number
   inGame: boolean
+  /** Partidas SoloQ registradas dentro del periodo del torneo (DB), no la temporada de Riot. */
+  tournament: {
+    games: number
+    wins: number
+    losses: number
+  }
 }

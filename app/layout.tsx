@@ -3,6 +3,7 @@ import { Inter, Rajdhani } from "next/font/google"
 import Navbar from "@/components/Navbar"
 import AppQueryProvider from "@/components/AppQueryProvider"
 import "./globals.css"
+import { getEventConfig } from "@/constants/events"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,10 +18,11 @@ const rajdhani = Rajdhani({
   display: "swap",
 })
 
+const event = getEventConfig()
+
 export const metadata: Metadata = {
-  title: "SOLOGAE",
-  description:
-    "Compite en SoloGae Challenge - Escala y supera a Diego en cantidad de juegos.",
+  title: event.name,
+  description: `Compite en ${event.name} - Escala y supera a Diego en cantidad de juegos.`,
 }
 
 export default function RootLayout({

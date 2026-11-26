@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import sql from "@/lib/db"
 import { withServerCache } from "@/lib/serverCache"
+import { eventCacheKey, getEventConfig } from "@/constants/events"
 
 const RECENT_LIMIT = 60
 
@@ -22,13 +23,18 @@ function pairKey(a: string, b: string): string {
 }
 
 export async function GET() {
-  const payload = await withServerCache("api:estadisticas:coincidencias", 300, async () => {
+  const cfg = getEventConfig()
+  const startMs = cfg.start.getTime()
+  const endMs = cfg.end.getTime()
+  const payload = await withServerCache(eventCacheKey("api:estadisticas:coincidencias", cfg), 300, async () => {
     const rows = await sql`
       SELECT mp.match_id, p.alias, mp.champion_name, mp.team_id, mp.win,
              mp.kills, mp.deaths, mp.assists, mp.game_duration, mp.game_start_timestamp
       FROM match_participants mp
       JOIN participants p ON p.id = mp.participant_id
       WHERE p.active = true
+        AND mp.game_start_timestamp >= ${startMs}
+        AND mp.game_start_timestamp < ${endMs}
       ORDER BY mp.game_start_timestamp DESC
     ` as MatchRow[]
 

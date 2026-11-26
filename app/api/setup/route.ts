@@ -1,30 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import sql from "@/lib/db"
+import { isBearerAuthorized } from "@/lib/adminAuth"
 
-const SEED = [
-  { gameName: "Moya12345",      tagLine: "LAS",  alias: "Moya",            twitch: "moya31"             },
-  { gameName: "PepeTelaXupo",   tagLine: "Duo",  alias: "Diego",           twitch: "shaka31tv"          },
-  { gameName: "Roku Roku",      tagLine: "Deuss",alias: "Kenpaxhi",         twitch: "RETIRADO"           },
-  { gameName: "ClaudioTrol",    tagLine: "MEE",  alias: "Nikolito",        twitch: "primo_kurama"       },
-  { gameName: "Scout",          tagLine: "Night",alias: "Claudio",          twitch: "claudio_mee"        },
-  { gameName: "Son Jorge",      tagLine: "Miau", alias: "Jorgito",         twitch: null                 },
-  { gameName: "Tr4v4 Enj0y3r", tagLine: "Meex", alias: "Meex",            twitch: "meeex"              },
-  { gameName: "Kz42",           tagLine: "LAS",  alias: "Gae",             twitch: "imnotgaebolg"       },
-  { gameName: "Vegeta Daima",   tagLine: "miau", alias: "Flipi",           twitch: "flyypy"             },
-  { gameName: "ElNiñoMasWn",   tagLine: "LAS",  alias: "Maza",            twitch: "imaza1234"          },
-  { gameName: "Tio Pene",       tagLine: "ASD",  alias: "Pulento Diosito", twitch: "el_pulento_diosito" },
-  { gameName: "LeMati",         tagLine: "Shulk",alias: "Colmena",         twitch: null                 },
-  { gameName: "SoySebane",      tagLine: "SANV", alias: "Sebastian",       twitch: null                 },
-]
-
+// Crea/migra el esquema de forma idempotente. NO inserta participantes (la carga de
+// participantes se hará por un proceso separado) y NO borra datos: el reinicio de la
+// base se hace solo con scripts/sql/reset-sologae2.sql, nunca desde la app.
+// Requiere Authorization: Bearer <SNAPSHOT_SECRET>; si el secreto no está configurado
+// responde 401 (falla cerrado).
 export async function GET(req: NextRequest) {
-  const secret = process.env.SNAPSHOT_SECRET
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? ""
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : ""
-    if (token !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  if (!isBearerAuthorized(req, [process.env.SNAPSHOT_SECRET])) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   // Crear tabla si no existe
@@ -86,26 +71,5 @@ export async function GET(req: NextRequest) {
     )
   `
 
-  // Verificar si ya hay datos
-  const existing = await sql`SELECT COUNT(*)::int AS count FROM participants`
-  if ((existing[0].count as number) > 0) {
-    return NextResponse.json({
-      message: "La tabla ya tiene datos, seed omitido.",
-      count: existing[0].count,
-    })
-  }
-
-  // Insertar participantes
-  for (const p of SEED) {
-    await sql`
-      INSERT INTO participants (game_name, tag_line, alias, twitch_username)
-      VALUES (${p.gameName}, ${p.tagLine}, ${p.alias}, ${p.twitch})
-      ON CONFLICT (game_name, tag_line) DO NOTHING
-    `
-  }
-
-  return NextResponse.json({
-    message: "Setup completo.",
-    inserted: SEED.length,
-  })
+  return NextResponse.json({ message: "Esquema verificado (idempotente). No se insertaron datos." })
 }
