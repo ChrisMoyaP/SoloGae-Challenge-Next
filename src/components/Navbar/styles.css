@@ -152,32 +152,6 @@
   outline: none;
 }
 
-/* Toast notification */
-.sg-toast {
-  position: fixed;
-  top: 80px;
-  right: 24px;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: var(--bg3);
-  border: 1px solid var(--teal);
-  color: var(--ivory);
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  font-size: 0.84rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-}
-
-.sg-toast-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 8px var(--teal);
-}
-
 /* Streams Drawer */
 .sg-streams-drawer-backdrop {
   position: fixed;
@@ -232,10 +206,6 @@
   }
 
   .sg-brand-sub {
-    display: none;
-  }
-
-  .sg-nav-actions .sg-btn-secondary {
     display: none;
   }
 

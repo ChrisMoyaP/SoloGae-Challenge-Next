@@ -20,7 +20,6 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("")
   const [streamsOpen, setStreamsOpen] = useState(false)
   const [liveCount, setLiveCount] = useState(0)
-  const [authNotice, setAuthNotice] = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/twitch/live")
@@ -30,12 +29,6 @@ export default function Navbar() {
       })
       .catch(() => {})
   }, [])
-
-  useEffect(() => {
-    if (!authNotice) return
-    const t = setTimeout(() => setAuthNotice(null), 3000)
-    return () => clearTimeout(t)
-  }, [authNotice])
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -135,32 +128,10 @@ export default function Navbar() {
                 </svg>
               </button>
             )}
-
-            <button
-              type="button"
-              className="sg-btn sg-btn-secondary sg-btn-sm"
-              onClick={() => setAuthNotice("El inicio de sesión estará disponible próximamente.")}
-            >
-              Iniciar sesión
-            </button>
-            <button
-              type="button"
-              className="sg-btn sg-btn-primary sg-btn-sm"
-              onClick={() => setAuthNotice("Las inscripciones de temporada están cerradas.")}
-            >
-              Regístrate
-            </button>
+            {/* RF-03: login y registro deshabilitados en esta edición (sitio público de solo lectura). */}
           </div>
         </div>
       </header>
-
-      {/* Toast informativo para botones decorativos */}
-      {authNotice && (
-        <div className="sg-toast" role="status">
-          <span className="sg-toast-dot" />
-          {authNotice}
-        </div>
-      )}
 
       {/* Drawer de Streams / Comunidad */}
       {streamsOpen && (

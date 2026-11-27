@@ -94,7 +94,7 @@ export default function HomePage() {
           </p>
           <div className="sg-hero-actions">
             <Link href="/ranking" className="sg-btn sg-btn-primary">
-              Únete ahora
+              Ver ranking
             </Link>
             <Link href="/live" className="sg-btn sg-btn-secondary">
               Ver torneos
@@ -429,21 +429,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Banner Inferior de Comunidad ── */}
-      <section className="sg-community-banner">
-        <div>
-          <h2 className="sg-community-title">
-            UNA COMUNIDAD QUE NUNCA SE DETIENE
-          </h2>
-          <p className="sg-community-sub">
-            Sigue las partidas en directo, revisa los duelos entre participantes
-            y acompaña los streams oficiales.
-          </p>
-        </div>
-        <Link href="/live" className="sg-btn sg-btn-purple">
-          Juega. Compite. Evoluciona <span>→</span>
-        </Link>
-      </section>
+      {SHOW_COMMUNITY_BANNER && <CommunityBanner />}
     </main>
+  )
+}
+
+// RF-03: banner inferior "Una comunidad que nunca se detiene" deshabilitado en esta
+// edición. Para reactivarlo basta con poner el flag en true (estilos en globals.css).
+const SHOW_COMMUNITY_BANNER = false
+
+function CommunityBanner() {
+  return (
+    <section className="sg-community-banner">
+      <div>
+        <h2 className="sg-community-title">
+          UNA COMUNIDAD QUE NUNCA SE DETIENE
+        </h2>
+        <p className="sg-community-sub">
+          Sigue las partidas en directo, revisa los duelos entre participantes
+          y acompaña los streams oficiales.
+        </p>
+      </div>
+      <Link href="/live" className="sg-btn sg-btn-purple">
+        Juega. Compite. Evoluciona <span>→</span>
+      </Link>
+    </section>
   )
 }
